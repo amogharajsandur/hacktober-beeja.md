@@ -1,0 +1,30 @@
+# secrets
+.env
+.env.*
+*.pem
+*.key
+
+# python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+.coverage
+
+# node
+node_modules/
+web/dist/
+
+# editors / OS
+.DS_Store
+.idea/
+.vscode/
+
+# scratch output
+/out/
+/tmp/
