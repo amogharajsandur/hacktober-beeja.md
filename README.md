@@ -82,29 +82,56 @@ beeja extract -i benchmarks/synthetic-config-format/input/discussion.txt -o out/
 On an 8 GB laptop the default 8k context can cause swapping; use a smaller context and chunks:
 `BEEJA_NUM_CTX=4096 beeja extract --chunk-chars 4000 ...`.
 
-### Other endpoints (open-weight models only)
+### Any provider: just add an API key
 
-| setup | how |
-|---|---|
-| Organiser / remote Ollama server | `OLLAMA_HOST=http://server:11434 BEEJA_MODEL=<tag> beeja extract ...` |
-| Any OpenAI-compatible server (vLLM, llama.cpp, LM Studio, LiteLLM) | `BEEJA_PROVIDER=openai BEEJA_BASE_URL=http://server:8000/v1 BEEJA_MODEL=<model> [BEEJA_API_KEY=...] beeja extract ...` |
-| Ollama Cloud through the local daemon | `ollama signin`, then `BEEJA_MODEL=gemma4:31b-cloud beeja extract ...` |
-| Ollama Cloud directly | `BEEJA_BASE_URL=https://ollama.com BEEJA_API_KEY=$OLLAMA_API_KEY BEEJA_MODEL=gemma4:31b beeja extract ...` |
+No key means local Ollama. Put **any** provider's key in `BEEJA_API_KEY` (in your shell or a `.env`
+file in the working directory) and Beeja detects the provider from the key prefix and uses that
+provider's default model:
 
-Hosted endpoints often ignore Ollama's JSON-schema `format` (Ollama Cloud answers in Markdown),
-so for them Beeja also states the schema in the prompt, parses replies leniently (code fences,
-`<think>` blocks, surrounding prose) and makes one repair attempt. Force this with
-`BEEJA_SCHEMA_IN_PROMPT=1`. API keys are read from the environment only, are sent only to
-non-local hosts, and must never be committed (`.env` is git-ignored).
+```bash
+echo 'BEEJA_API_KEY=gsk_...' > .env          # Groq key -> llama-3.3-70b-versatile
+beeja extract -i benchmarks/synthetic-config-format/input/discussion.txt -o out/demo.json
 
-> **Hackathon rules:** the participant guidelines allow open-weight models "on your laptop or on
+beeja providers                               # all presets, their default models, and the active one
+beeja extract --provider openrouter --model qwen/qwen3-32b -i ... -o ...
+beeja extract --provider custom --base-url http://server:8000/v1 --model qwen3-4b -i ... -o ...
+```
+
+| provider (`--provider` / `BEEJA_PROVIDER`) | detected from key | default model | open weights |
+|---|---|---|---|
+| `ollama` (default, local) | – (no key) | `qwen3:4b` | yes |
+| `ollama-cloud` | – (`OLLAMA_API_KEY`) | `gemma4:31b` | yes |
+| `groq` | `gsk_` | `llama-3.3-70b-versatile` | yes |
+| `openrouter` | `sk-or-` | `meta-llama/llama-3.3-70b-instruct` | yes (by default) |
+| `huggingface` | `hf_` | `Qwen/Qwen3-32B` | yes |
+| `together`, `fireworks`, `cerebras`, `deepseek`, `mistral` | `fw_`, `csk-` (others: set `--provider`) | Llama 3.3 70B / DeepSeek / Mistral Small | yes |
+| `openai` | `sk-`, `sk-proj-` | `gpt-4o-mini` | **no** |
+| `anthropic` | `sk-ant-` | `claude-sonnet-5-5` | **no** |
+| `gemini` | `AIza` | `gemini-2.5-flash` | **no** |
+| `xai` | `xai-` | `grok-3-mini` | **no** |
+| `custom` / `openai-compatible` | – | set `--model` | any OpenAI-compatible server (vLLM, llama.cpp, LM Studio, LiteLLM, organiser server) |
+
+Each preset also reads its usual key variable (`GROQ_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`,
+`GEMINI_API_KEY`, ...). `--model` / `BEEJA_MODEL` and `--base-url` / `BEEJA_BASE_URL` override any
+preset. Keys are only read from the environment or `.env` (git-ignored), never passed on the
+command line, and never sent to local servers.
+
+Hosted endpoints often ignore Ollama's JSON-schema `format`, so for every non-local provider
+Beeja states the schema in the prompt, asks for structured output where the API supports it
+(falling back automatically when it does not), parses replies leniently (code fences, `<think>`
+blocks, surrounding prose) and makes one repair attempt. Every result still goes through the
+same quote verification and support check, whichever model produced it.
+
+> **Hackathon rules:** closed-model providers (marked **no** above) work, but Beeja prints a
+> warning: the guidelines score closed models 0 for open-source AI use. The guidelines allow
+> open-weight models "on your laptop or on
 > our model server", and closed-model APIs score 0. Ollama Cloud hosts open-weight models but is
 > a third-party service that is not explicitly approved. Get organiser approval before using
 > it for the submission, and update `HACKATHON.md` and `examples/` if the declared model changes.
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `BEEJA_PROVIDER` | `ollama` | `ollama`, `openai` (OpenAI-compatible server), or `replay` |
+| `BEEJA_PROVIDER` | `auto` | `auto` (local Ollama, or detected from the key), a preset name, or `replay` |
 | `BEEJA_MODEL` | `qwen3:4b` | model tag / name |
 | `BEEJA_BASE_URL` / `OLLAMA_HOST` | `http://localhost:11434` | server URL (a bare host means port 11434) |
 | `BEEJA_API_KEY` / `OLLAMA_API_KEY` | – | bearer token for remote servers |

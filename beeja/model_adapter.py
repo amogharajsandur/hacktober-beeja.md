@@ -16,7 +16,8 @@ do not (Ollama Cloud ignores ``format``), so for those the schema is also stated
 replies are parsed leniently (code fences, ``<think>`` blocks, preamble) and one repair turn is
 attempted before failing.
 
-Configuration (environment): ``BEEJA_PROVIDER`` (``ollama`` | ``openai`` | ``replay``),
+Configuration (environment, or a ``.env`` file): ``BEEJA_PROVIDER`` (``auto`` | a name in
+``PRESETS`` | ``replay``; ``auto`` = local Ollama, or the provider detected from ``BEEJA_API_KEY``),
 ``BEEJA_MODEL`` (default ``qwen3:4b``), ``BEEJA_BASE_URL`` / ``OLLAMA_HOST`` (server URL),
 ``BEEJA_API_KEY`` (or ``OLLAMA_API_KEY``; only sent to non-local hosts), ``BEEJA_SCHEMA_IN_PROMPT``
 (``auto`` | ``1`` | ``0``), ``BEEJA_REPLAY_FILE``, ``BEEJA_TIMEOUT`` seconds, ``BEEJA_NUM_CTX``.
@@ -193,34 +194,67 @@ class OpenAICompatibleProvider(_ChatProvider):
         timeout: float = 600.0,
         retries: int = 2,
         seed: int = 7,
+        label: str | None = None,
+        extra_headers: dict[str, str] | None = None,
         client: httpx.Client | None = None,
     ) -> None:
         super().__init__()
         self.model = model
         self.base_url = base_url.rstrip("/")
-        self.name = f"openai-compatible:{model}@{urlsplit(self.base_url).hostname}"
+        self.name = f"{label or 'openai-compatible'}:{model}"
         self.retries = retries
         self.seed = seed
         self.schema_in_prompt = True
         self._structured = True
         headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
+        headers.update(extra_headers or {})
         self._client = client or httpx.Client(timeout=timeout, headers=headers)
 
     def _chat(self, messages, schema):
-        payload: dict[str, Any] = {"model": self.model, "messages": messages, "temperature": 0, "seed": self.seed}
+        payload: dict[str, Any] = {"model": self.model, "messages": messages, "temperature": 0}
+        if self._structured:
+            payload["seed"] = self.seed
         if self._structured:
             payload["response_format"] = {"type": "json_schema",
                                           "json_schema": {"name": "beeja", "schema": schema, "strict": False}}
         r = self._client.post(f"{self.base_url}/chat/completions", json=payload)
         if r.status_code in (400, 422) and self._structured:
-            self._structured = False  # server does not support structured output; prompt + parse instead
+            # server rejects structured output (or seed): fall back to schema-in-prompt + lenient parsing
+            self._structured = False
             payload.pop("response_format")
+            payload.pop("seed", None)
             r = self._client.post(f"{self.base_url}/chat/completions", json=payload)
         r.raise_for_status()
         data = r.json()
         usage = data.get("usage") or {}
         return data["choices"][0]["message"]["content"] or "", {
             "prompt_tokens": usage.get("prompt_tokens"), "output_tokens": usage.get("completion_tokens")}
+
+
+class AnthropicProvider(_ChatProvider):
+    """Anthropic Messages API (``POST /v1/messages``); schema in prompt + lenient parsing."""
+
+    def __init__(self, model: str, api_key: str, *, base_url: str = "https://api.anthropic.com",
+                 timeout: float = 600.0, retries: int = 2, client: httpx.Client | None = None) -> None:
+        super().__init__()
+        self.model = model
+        self.name = f"anthropic:{model}"
+        self.base_url = base_url.rstrip("/")
+        self.retries = retries
+        self.schema_in_prompt = True
+        headers = {"x-api-key": api_key, "anthropic-version": "2023-06-01"}
+        self._client = client or httpx.Client(timeout=timeout, headers=headers)
+
+    def _chat(self, messages, schema):
+        system = "\n\n".join(m["content"] for m in messages if m["role"] == "system")
+        payload = {"model": self.model, "max_tokens": 8192, "temperature": 0, "system": system,
+                   "messages": [m for m in messages if m["role"] != "system"]}
+        r = self._client.post(f"{self.base_url}/v1/messages", json=payload)
+        r.raise_for_status()
+        data = r.json()
+        text = "".join(b.get("text", "") for b in data.get("content", []) if b.get("type") == "text")
+        usage = data.get("usage") or {}
+        return text, {"prompt_tokens": usage.get("input_tokens"), "output_tokens": usage.get("output_tokens")}
 
 
 class RecordingProvider:
@@ -291,37 +325,124 @@ class ReplayProvider:
         return self._db[key]
 
 
+# name: (kind, base_url, key env vars, default model, open_weight_default)
+PRESETS: dict[str, tuple[str, str | None, tuple[str, ...], str, bool]] = {
+    "ollama":       ("ollama", None, (), DEFAULT_MODEL, True),
+    "ollama-cloud": ("ollama", "https://ollama.com", ("OLLAMA_API_KEY",), "gemma4:31b", True),
+    "openai":       ("openai", "https://api.openai.com/v1", ("OPENAI_API_KEY",), "gpt-4o-mini", False),
+    "anthropic":    ("anthropic", "https://api.anthropic.com", ("ANTHROPIC_API_KEY",), "claude-sonnet-5-5", False),
+    "gemini":       ("openai", "https://generativelanguage.googleapis.com/v1beta/openai",
+                     ("GEMINI_API_KEY", "GOOGLE_API_KEY"), "gemini-2.5-flash", False),
+    "groq":         ("openai", "https://api.groq.com/openai/v1", ("GROQ_API_KEY",), "llama-3.3-70b-versatile", True),
+    "openrouter":   ("openai", "https://openrouter.ai/api/v1", ("OPENROUTER_API_KEY",),
+                     "meta-llama/llama-3.3-70b-instruct", True),
+    "together":     ("openai", "https://api.together.xyz/v1", ("TOGETHER_API_KEY",),
+                     "meta-llama/Llama-3.3-70B-Instruct-Turbo", True),
+    "fireworks":    ("openai", "https://api.fireworks.ai/inference/v1", ("FIREWORKS_API_KEY",),
+                     "accounts/fireworks/models/llama-v3p3-70b-instruct", True),
+    "cerebras":     ("openai", "https://api.cerebras.ai/v1", ("CEREBRAS_API_KEY",), "llama-3.3-70b", True),
+    "deepseek":     ("openai", "https://api.deepseek.com/v1", ("DEEPSEEK_API_KEY",), "deepseek-chat", True),
+    "mistral":      ("openai", "https://api.mistral.ai/v1", ("MISTRAL_API_KEY",), "mistral-small-latest", True),
+    "xai":          ("openai", "https://api.x.ai/v1", ("XAI_API_KEY",), "grok-3-mini", False),
+    "huggingface":  ("openai", "https://router.huggingface.co/v1", ("HF_TOKEN",), "Qwen/Qwen3-32B", True),
+    "openai-compatible": ("openai", None, (), "", True),  # any server: set BEEJA_BASE_URL
+}
+ALIASES = {"local": "ollama", "google": "gemini", "claude": "anthropic", "hf": "huggingface", "custom": "openai-compatible"}
+
+# key prefix -> preset, most specific first
+_KEY_PREFIXES = [("sk-ant-", "anthropic"), ("sk-or-", "openrouter"), ("gsk_", "groq"), ("AIza", "gemini"),
+                 ("xai-", "xai"), ("fw_", "fireworks"), ("csk-", "cerebras"), ("hf_", "huggingface"),
+                 ("sk-proj-", "openai"), ("sk-", "openai")]
+
+
+def detect_provider(api_key: str) -> str | None:
+    """Guess the provider from the key's prefix (None if unknown, e.g. Together/Mistral/Ollama keys)."""
+    for prefix, name in _KEY_PREFIXES:
+        if api_key.startswith(prefix):
+            return name
+    return None
+
+
+def load_dotenv(path: Path = Path(".env")) -> None:
+    """Minimal .env support (KEY=VALUE lines); real environment variables win."""
+    if not path.is_file():
+        return
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        k, v = line.removeprefix("export ").split("=", 1)
+        os.environ.setdefault(k.strip(), v.strip().strip("'\""))
+
+
 def _schema_flag() -> bool | None:
     v = os.environ.get("BEEJA_SCHEMA_IN_PROMPT", "auto").strip().lower()
     return None if v in ("", "auto") else v in ("1", "true", "yes")
 
 
+def resolve_provider_name() -> str:
+    name = os.environ.get("BEEJA_PROVIDER", "auto").strip().lower() or "auto"
+    name = ALIASES.get(name, name)
+    if name == "auto":
+        key = os.environ.get("BEEJA_API_KEY", "").strip()
+        if not key:
+            return "ollama"  # no key: local model
+        if os.environ.get("BEEJA_BASE_URL"):
+            return "openai-compatible"
+        found = detect_provider(key)
+        if found is None:
+            raise ModelError("cannot tell which provider BEEJA_API_KEY belongs to; set BEEJA_PROVIDER "
+                             f"(one of: {', '.join(sorted(PRESETS))})")
+        return found
+    if name not in PRESETS and name != "replay":
+        raise ModelError(f"unknown BEEJA_PROVIDER {name!r} (use one of: auto, replay, {', '.join(sorted(PRESETS))})")
+    return name
+
+
 def provider_from_env(record_to: Path | None = None, replay_from: Path | None = None) -> ModelProvider:
-    kind = os.environ.get("BEEJA_PROVIDER", "ollama").lower()
-    model = os.environ.get("BEEJA_MODEL", DEFAULT_MODEL)
+    """Build a provider from the environment.
+
+    * No key: local Ollama (``qwen3:4b``).
+    * ``BEEJA_API_KEY`` alone: provider detected from the key prefix, with that provider's default model.
+    * ``BEEJA_PROVIDER`` names a preset (see ``PRESETS``); its standard key variable also works
+      (e.g. ``GROQ_API_KEY``). ``BEEJA_MODEL`` / ``BEEJA_BASE_URL`` override model and endpoint.
+    """
+    load_dotenv()
     replay = replay_from or (Path(os.environ["BEEJA_REPLAY_FILE"]) if os.environ.get("BEEJA_REPLAY_FILE") else None)
-    if replay is not None or kind == "replay":
+    name = "replay" if replay is not None else resolve_provider_name()
+    if name == "replay":
         if replay is None:
             raise ModelError("BEEJA_PROVIDER=replay requires --replay or BEEJA_REPLAY_FILE")
-        return ReplayProvider(replay, model=model)
+        return ReplayProvider(replay, model=os.environ.get("BEEJA_MODEL", DEFAULT_MODEL))
+    kind, base, key_vars, default_model, _ = PRESETS[name]
+    model = os.environ.get("BEEJA_MODEL") or default_model
+    base = os.environ.get("BEEJA_BASE_URL") or base
+    key = os.environ.get("BEEJA_API_KEY") or next((os.environ[v] for v in key_vars if os.environ.get(v)), None)
     timeout = float(os.environ.get("BEEJA_TIMEOUT", "600"))
-    key = os.environ.get("BEEJA_API_KEY") or None
     if kind == "ollama":
         p: Any = OllamaProvider(
             model=model,
-            host=_host(os.environ.get("BEEJA_BASE_URL") or os.environ.get("OLLAMA_HOST") or DEFAULT_HOST),
+            host=_host(base or os.environ.get("OLLAMA_HOST") or DEFAULT_HOST),
             timeout=timeout,
             num_ctx=int(os.environ.get("BEEJA_NUM_CTX", "8192")),
             api_key=key or os.environ.get("OLLAMA_API_KEY") or None,
             schema_in_prompt=_schema_flag(),
         )
-    elif kind == "openai":
-        base = os.environ.get("BEEJA_BASE_URL")
-        if not base:
-            raise ModelError("BEEJA_PROVIDER=openai requires BEEJA_BASE_URL (e.g. http://server:8000/v1)")
-        p = OpenAICompatibleProvider(model=model, base_url=base, api_key=key, timeout=timeout)
+        if name == "ollama-cloud" and not (key or os.environ.get("OLLAMA_API_KEY")):
+            raise ModelError("ollama-cloud needs an API key: set BEEJA_API_KEY or OLLAMA_API_KEY")
     else:
-        raise ModelError(f"unknown BEEJA_PROVIDER {kind!r} (use ollama, openai or replay)")
+        if not model:
+            raise ModelError(f"{name}: set BEEJA_MODEL")
+        if not base:
+            raise ModelError(f"{name}: set BEEJA_BASE_URL (e.g. http://server:8000/v1)")
+        if not key and name != "openai-compatible":
+            raise ModelError(f"{name} needs an API key: set BEEJA_API_KEY or {' / '.join(key_vars)}")
+        if kind == "anthropic":
+            p = AnthropicProvider(model, key or "", base_url=base, timeout=timeout)
+        else:
+            extra = {"X-Title": "beeja"} if name == "openrouter" else None
+            p = OpenAICompatibleProvider(model=model, base_url=base, api_key=key, timeout=timeout,
+                                         label=name, extra_headers=extra)
     return RecordingProvider(p, record_to) if record_to else p
 
 
