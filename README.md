@@ -6,9 +6,9 @@ the result as validated, evidence-linked JSON decision records.
 
 Hacktoberfest HackDay Sonipat 2026 — Problem 06: Open Source Decision Intelligence and Knowledge Recovery.
 
-> Status: Phase 5. Ingestion, chunked extraction with a real local open-weight model, quote
+> Status: Phase 6. Ingestion, chunked extraction with a real local open-weight model, quote
 > verification, a support-checking second pass, a PEP benchmark with withheld ground truth,
-> offline search / get / "why not X?", PR-diff advisories and a read-only decision viewer work today.
+> offline search / get / "why not X?", PR-diff advisories, a read-only decision viewer and a read-only MCP server work today.
 
 ## Install
 
@@ -133,6 +133,44 @@ The viewer is optional: every record is equally available through `beeja search`
 
 Exports: `beeja export-madr <dec-id> --store decisions` renders a basic MADR document
 (unverified evidence is labelled).
+
+## MCP server for coding agents
+
+`beeja-mcp` is a local, read-only [Model Context Protocol](https://modelcontextprotocol.io)
+server over stdio, built on the official Python SDK (`mcp` 2.x, `MCPServer`). It calls the same
+functions as the CLI.
+
+| tool | returns |
+|---|---|
+| `search_decisions(query, limit=5, negative_only=false)` | compact hits: IDs, title, status, one reason, verified evidence refs |
+| `get_decision(ref)` | one decision (`dec-id`) or one alternative (`dec-id#alt-2`) with its evidence |
+| `why_not(idea)` | rejected / withdrawn / deferred alternatives with their verified reasons |
+| `check_diff(diff)` | advisories for a unified diff (same rules as `beeja check-diff`) |
+
+All tools are annotated read-only; nothing writes to disk, calls a model or uses the network.
+Responses label discussion-derived text as untrusted data so agents treat it as quotes, not
+instructions.
+
+```bash
+pip install -e ".[mcp]"
+beeja-mcp --store decisions        # stdio; BEEJA_STORE also works
+```
+
+Example client configuration (Claude Code / Claude Desktop style `mcpServers` entry):
+
+```json
+{
+  "mcpServers": {
+    "beeja": {
+      "command": "beeja-mcp",
+      "args": ["--store", "/absolute/path/to/hacktober-beeja.md/decisions"]
+    }
+  }
+}
+```
+
+`tests/test_mcp.py` exercises every tool through the SDK client both in-process and by
+launching `python -m beeja.mcp_server` as a real stdio subprocess.
 
 ## Benchmark
 
