@@ -29,3 +29,5 @@ web/dist/
 /out/
 /tmp/
 !.env.example
+imports/*/history/
+imports/*/.staging/

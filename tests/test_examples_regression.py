@@ -2,6 +2,7 @@
 example outputs exactly. This keeps CI deterministic and offline while proving the committed
 examples came from the current pipeline."""
 
+import json
 from pathlib import Path
 
 import pytest
@@ -13,7 +14,7 @@ from beeja.model_adapter import ReplayProvider
 from beeja.schema import check_integrity
 
 ROOT = Path(__file__).resolve().parent.parent
-CASES = sorted(p.parent for p in (ROOT / "examples").glob("*/model_exchanges.jsonl"))
+CASES = sorted(p.parent for d in ("examples", "imports") for p in (ROOT / d).glob("*/model_exchanges.jsonl"))
 
 
 @pytest.mark.parametrize("case", CASES, ids=[c.name for c in CASES])
@@ -23,6 +24,9 @@ def test_example_replays_to_committed_output(case):
     rec = extract(d, ReplayProvider(case / "model_exchanges.jsonl", model="qwen3:4b"))
     rec.metadata["model"] = "ollama:qwen3:4b"  # recorded from live Ollama; replay reports itself
     committed = (case / "decision.json").read_text()
+    for k in ("github", "imported_at"):  # import metadata is added after extraction
+        if k in json.loads(committed)["metadata"]:
+            rec.metadata[k] = json.loads(committed)["metadata"][k]
     assert storage.dumps(rec) == committed
     assert check_integrity(rec) == []
 
@@ -32,7 +36,7 @@ def test_examples_exist():
 
 
 def test_decision_store_matches_examples():
-    """decisions/ (the store the CLI, MCP and diff advisories read) is exactly the example outputs."""
+    """decisions/ (the store the CLI, MCP and diff advisories read) is exactly the example and import outputs."""
     store = {p.name: p.read_text() for p in (ROOT / "decisions").glob("*.json")}
     expected = {}
     for case in CASES:

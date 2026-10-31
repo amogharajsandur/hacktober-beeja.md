@@ -43,7 +43,7 @@ def test_export_web_includes_only_cited_messages(tmp_path):
 
 def test_committed_web_data_is_current(tmp_path):
     out = tmp_path / "data"
-    export_web(ROOT / "examples", out)
+    export_web([d for d in (ROOT / "examples", ROOT / "imports") if d.is_dir()], out)
     committed = ROOT / "web" / "public" / "data"
     assert sorted(p.name for p in committed.iterdir()) == sorted(p.name for p in out.iterdir())
     for p in out.iterdir():

@@ -107,21 +107,166 @@ function Tiles({ counts, verified, total }: { counts: Record<string, number>; ve
 
 // ------------------------------------------------------------------ list
 
-function DecisionList() {
-  const idx = useJson<IndexEntry[]>("./data/index.json");
-  const [q, setQ] = useState("");
-  if (idx.state === "loading") return <Skeleton />;
-  if (idx.state === "error")
+// ------------------------------------------------------------------ GitHub import (needs `beeja serve`)
+
+type Job = {
+  state: "running" | "done" | "error";
+  progress: string[];
+  error?: string;
+  kind?: string;
+  decision_id?: string;
+  result?: { decision_id: string; summary: string; messages: number; archived_previous: string | null };
+};
+type Status = { imports: boolean; model: string | null; model_error: string | null; github_auth: boolean };
+
+const HINTS: Record<string, string> = {
+  invalid_url: "Use a link like https://github.com/owner/repo/issues/123 or …/pull/123.",
+  not_found: "Check the number, or set GITHUB_TOKEN in .env for private repositories.",
+  rate_limited: "Add GITHUB_TOKEN to .env (or run `gh auth login`), restart `make viewer`, and retry.",
+  network: "Check your internet connection.",
+  empty: "Nothing to analyse yet — come back when the thread has a discussion.",
+  model_unreachable: "Start your model server, or fix BEEJA_PROVIDER / BEEJA_MODEL / BEEJA_BASE_URL in .env.",
+  model: "The model failed. Try again, or configure a different model in .env.",
+};
+
+function ImportPanel({ onImported }: { onImported: () => void }) {
+  const [status, setStatus] = useState<Status | null | "offline">(null);
+  const [url, setUrl] = useState("");
+  const [job, setJob] = useState<Job | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/status")
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then(setStatus)
+      .catch(() => setStatus("offline"));
+  }, []);
+
+  const start = async (reimport = false) => {
+    setBusy(true);
+    setJob({ state: "running", progress: ["Starting…"] });
+    try {
+      const r = await fetch("/api/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: url.trim(), reimport }),
+      });
+      const body = await r.json();
+      if (r.status !== 202) {
+        setJob({ state: "error", progress: [], error: body.error, kind: body.kind, decision_id: body.decision_id });
+        setBusy(false);
+        return;
+      }
+      const poll = async () => {
+        const j: Job = await (await fetch(`/api/jobs/${body.job}`)).json();
+        setJob(j);
+        if (j.state === "running") setTimeout(poll, 1000);
+        else {
+          setBusy(false);
+          if (j.state === "done") onImported();
+        }
+      };
+      poll();
+    } catch {
+      setJob({ state: "error", progress: [], error: "Lost contact with the local server.", kind: "network" });
+      setBusy(false);
+    }
+  };
+
+  if (status === null) return null;
+  if (status === "offline")
     return (
-      <div className="empty error">
-        <h2>No decision data yet</h2>
-        <p>
-          Could not load <code>data/index.json</code> ({idx.message}). Run <code>make viewer</code> (or{" "}
-          <code>beeja export-web</code>) first. Everything is also available from the CLI: <code>beeja search</code>.
+      <div className="card importer off">
+        <strong>Import from GitHub</strong>
+        <p className="fine">
+          This copy of the viewer is static. Start it with <code>make viewer</code> to paste a GitHub issue or PR URL
+          and import it here.
         </p>
       </div>
     );
-  const items = idx.data.filter((d) => (d.question + " " + d.topic + " " + d.summary).toLowerCase().includes(q.toLowerCase()));
+  return (
+    <div className="card importer">
+      <div className="imp-head">
+        <strong>Import a GitHub issue or pull request</strong>
+        <span className="fine">
+          model <code>{status.model ?? "not configured"}</code> · GitHub {status.github_auth ? "authenticated" : "anonymous (60 req/h)"}
+        </span>
+      </div>
+      {status.model_error && <p className="callout bad">Model not configured: {status.model_error}. Edit .env.</p>}
+      <form
+        className="imp-row"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (!busy && url.trim()) start(false);
+        }}
+      >
+        <input placeholder="https://github.com/owner/repo/issues/123" value={url} onChange={(e) => setUrl(e.target.value)} disabled={busy} />
+        <button className="primary" disabled={busy || !url.trim()}>
+          {busy ? "Importing…" : "Import"}
+        </button>
+      </form>
+      {job && (
+        <div className={`job ${job.state}`}>
+          {job.progress.length === 0 && job.state === "running" && <p className="fine">Working…</p>}
+          {job.progress.length > 0 && (
+            <ol className="steps">
+              {job.progress.map((p, i) => (
+                <li key={i} className={i === job.progress.length - 1 && job.state === "running" ? "now" : ""}>
+                  {p}
+                </li>
+              ))}
+            </ol>
+          )}
+          {job.state === "done" && job.result && (
+            <div className="done">
+              <span>✔ {job.result.summary}</span>
+              {job.result.archived_previous && <span className="fine">Previous version kept in {job.result.archived_previous}</span>}
+              <a className="primary" href={`#/d/${encodeURIComponent(job.result.decision_id)}`}>Open dossier →</a>
+            </div>
+          )}
+          {job.state === "error" && (
+            <div className="err">
+              <strong>✕ {job.error}</strong>
+              {job.kind && HINTS[job.kind] && <span className="fine">{HINTS[job.kind]}</span>}
+              {job.kind === "exists" && job.decision_id && (
+                <div className="imp-actions">
+                  <a className="primary" href={`#/d/${encodeURIComponent(job.decision_id)}`}>Open existing</a>
+                  <button onClick={() => start(true)}>Re-import (keep old version in history)</button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DecisionList() {
+  const [version, setVersion] = useState(0);
+  const idx = useJson<IndexEntry[]>(`./data/index.json?v=${version}`);
+  const [q, setQ] = useState("");
+  const [last, setLast] = useState<IndexEntry[] | null>(null);
+  useEffect(() => {
+    if (idx.state === "ok") setLast(idx.data);
+  }, [idx]);
+  const importer = <ImportPanel onImported={() => setVersion((v) => v + 1)} />;
+  const data = idx.state === "ok" ? idx.data : last; // keep showing the old list while reloading
+  if (!data && idx.state === "loading") return <Skeleton />;
+  if (!data)
+    return (
+      <main className="list">
+        {importer}
+        <div className="empty error">
+          <h2>No decision data yet</h2>
+          <p>
+            Could not load <code>data/index.json</code> ({idx.state === "error" ? idx.message : ""}). Run{" "}
+            <code>make viewer</code>. Everything is also available from the CLI: <code>beeja search</code>.
+          </p>
+        </div>
+      </main>
+    );
+  const items = data.filter((d) => (d.question + " " + d.topic + " " + d.summary).toLowerCase().includes(q.toLowerCase()));
   return (
     <main className="list">
       <section className="hero">
@@ -135,6 +280,7 @@ function DecisionList() {
           <input placeholder="Filter by question or topic…" value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
       </section>
+      {importer}
       {items.length === 0 && <div className="empty">No decisions match “{q}”.</div>}
       <div className="grid-cards">
         {items.map((d) => (

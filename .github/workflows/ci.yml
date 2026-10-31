@@ -56,7 +56,7 @@ jobs:
       - name: Viewer data is generated from the committed records
         run: |
           pip install -e .
-          beeja export-web --examples examples --out web/public/data
+          beeja export-web --out web/public/data
           git diff --exit-code web/public/data
       - name: Install, type-check, build and test the viewer
         working-directory: web

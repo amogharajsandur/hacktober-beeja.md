@@ -3,7 +3,7 @@ PY ?= python3
 VENV ?= .venv
 BIN := $(VENV)/bin
 
-.PHONY: setup help test lint viewer viewer-data demo extract benchmark mcp clean
+.PHONY: setup help test lint viewer viewer-data import demo extract benchmark mcp clean
 
 say = @printf '\n\033[1;96m━━ %s ━━\033[0m\n' "$(1)"
 
@@ -27,11 +27,16 @@ test: lint        ## everything CI runs
 	$(BIN)/pytest -q
 	cd web && npm run build && npm test
 
-viewer-data:      ## regenerate web/public/data from examples/
-	$(BIN)/beeja export-web --examples examples --out web/public/data
+viewer-data:      ## regenerate web/public/data from examples/ and imports/
+	$(BIN)/beeja export-web --out web/public/data
 
-viewer: viewer-data  ## open the decision dossier at http://localhost:5173
-	cd web && npm run dev
+viewer:           ## ONE command: build the viewer and serve it with GitHub import at http://127.0.0.1:8765
+	@test -d web/node_modules || (cd web && npm ci --no-audit --no-fund)
+	@cd web && npm run build --silent
+	@FORCE_COLOR=1 $(BIN)/beeja serve --open
+
+import:           ## import a GitHub issue/PR from the terminal: make import URL=https://github.com/o/r/issues/1
+	@FORCE_COLOR=1 $(BIN)/beeja import $(URL)
 
 benchmark:        ## score committed outputs against the withheld PEP ground truth
 	@FORCE_COLOR=1 $(BIN)/beeja benchmark --dataset benchmarks --outputs examples

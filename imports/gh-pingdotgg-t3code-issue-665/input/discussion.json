@@ -1,0 +1,46 @@
+{
+ "thread_id": "gh-pingdotgg-t3code-issue-665",
+ "title": "pingdotgg/t3code#665: Feature: Option to delete non-empty Project",
+ "platform": "github",
+ "source_url": "https://github.com/pingdotgg/t3code/issues/665",
+ "messages": [
+  {
+   "message_id": "description",
+   "author_id": "benjaminbauer",
+   "author_display_name": "benjaminbauer",
+   "author_role": "NONE",
+   "created_at": "2026-03-09T11:31:00Z",
+   "source_url": "https://github.com/pingdotgg/t3code/issues/665",
+   "body": "# Status quo\nGiven I have a project with more than one thread\nWhen I want to delete the project\nThen the UI blocks that, asking me to delete all threads first\n\n<img width=\"560\" height=\"143\" alt=\"Image\" src=\"https://github.com/user-attachments/assets/b97aa900-ce64-4108-8a3f-0b9f70430012\" />\n\n# Proposal\nInstead of the notification, open a dialog to confirm deletion of non-empty project: \"Deleting `<project>` will also delete all threads\" -> confirm/cancel",
+   "reply_to": null,
+   "parent_message_id": null,
+   "platform": "github"
+  },
+  {
+   "message_id": "comment-4023107208",
+   "author_id": "binbandit",
+   "author_display_name": "binbandit",
+   "author_role": "CONTRIBUTOR",
+   "created_at": "2026-03-09T11:32:48Z",
+   "source_url": "https://github.com/pingdotgg/t3code/issues/665#issuecomment-4023107208",
+   "body": "Hopefully, #651 will help address this issue in the meantime. It will allow you to bulk select project threads and delete them.",
+   "reply_to": null,
+   "parent_message_id": null,
+   "platform": "github"
+  }
+ ],
+ "metadata": {
+  "github": {
+   "owner": "pingdotgg",
+   "repo": "t3code",
+   "kind": "issue",
+   "number": 665,
+   "state": "closed",
+   "fetched_messages": 2,
+   "omitted": [
+    "reactions",
+    "edit history"
+   ]
+  }
+ }
+}
