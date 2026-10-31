@@ -36,6 +36,7 @@ jobs:
         run: |
           beeja --help
           python -m beeja --version
+          beeja-mcp --help
           beeja schema > /dev/null
       - name: Unit, integration and regression tests
         run: pytest -q

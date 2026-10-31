@@ -15,10 +15,12 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8", "ruff>=0.5"]
+mcp = ["mcp>=2.3,<3"]
+dev = ["pytest>=8", "ruff>=0.5", "mcp>=2.3,<3"]
 
 [project.scripts]
 beeja = "beeja.cli:main"
+beeja-mcp = "beeja.mcp_server:main"
 
 [tool.setuptools.packages.find]
 include = ["beeja*"]
