@@ -1,0 +1,8 @@
+# Indentation style for the config parser
+[m1] alice: I propose we indent generated config files with tabs, since users can pick their own width.
+[m2] bob: Tabs render inconsistently across editors and break our YAML output, which forbids tab indentation.
+[m3] carol (maintainer): What about two spaces? It matches the upstream YAML style guide.
+[m4] dave: Or we could make the indentation width configurable with a new --indent flag.
+[m5] alice: Fair point about YAML. I withdraw the tabs idea.
+[m6] carol (maintainer): Decision: we go with two spaces. The configurable --indent flag is deferred to a later release.
+[m7] erin: Should we also reformat existing files? Some say yes, some say no, nobody has decided.
