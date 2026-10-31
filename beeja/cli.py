@@ -220,10 +220,11 @@ def cmd_check_diff(args: argparse.Namespace) -> int:
 def cmd_export_web(args: argparse.Namespace) -> int:
     from .export import export_web
 
-    if not Path(args.examples).is_dir():
-        print(f"error: not a directory: {args.examples}", file=sys.stderr)
+    dirs = [Path(d) for d in args.examples if Path(d).is_dir()]
+    if not dirs:
+        print(f"error: none of these directories exist: {', '.join(args.examples)}", file=sys.stderr)
         return EXIT_USAGE
-    ids = export_web(Path(args.examples), Path(args.out))
+    ids = export_web(dirs, Path(args.out))
     print(f"exported {len(ids)} decisions to {args.out}", file=sys.stderr)
     return EXIT_OK if ids else EXIT_INVALID
 
@@ -270,6 +271,64 @@ def cmd_providers(args: argparse.Namespace) -> int:
               f"{' / '.join(r['key_env']) or '-'}{tag}")
     print("\nPut any key in BEEJA_API_KEY (or a .env file); the provider is detected from its prefix.\n"
           "Override with BEEJA_PROVIDER / BEEJA_MODEL / BEEJA_BASE_URL or --provider/--model/--base-url.")
+    return EXIT_OK
+
+
+def cmd_import(args: argparse.Namespace) -> int:
+    from . import term
+    from .importer import ImportError_, import_github
+
+    st = term.style(sys.stderr)
+
+    def progress(msg: str) -> None:
+        if not args.quiet:
+            print(st("◆ beeja ", "bcyan", "bold") + msg, file=sys.stderr)
+
+    try:
+        res = import_github(args.url, root=Path(args.root), reimport=args.reimport, progress=progress)
+    except ImportError_ as exc:
+        if args.json:
+            _print_json({"ok": False, "error": str(exc), "kind": exc.kind, **exc.extra})
+        else:
+            print(st("✕ " + str(exc), "bred"), file=sys.stderr)
+        return EXIT_MODEL if exc.kind.startswith("model") else EXIT_INVALID if exc.kind == "exists" else EXIT_USAGE
+    if args.json:
+        _print_json({"ok": True, **res})
+    else:
+        print(st(f"✔ {res['decision_id']}", "bgreen", "bold") + f"  {res['summary']}")
+        print(f"  open it: beeja get {res['decision_id']}  ·  or in the viewer (make viewer)")
+    return EXIT_OK
+
+
+def cmd_serve(args: argparse.Namespace) -> int:
+    import webbrowser
+
+    from . import term
+    from .server import serve, status
+
+    root = Path(args.root)
+    static = root / "web" / "dist"
+    if not (static / "index.html").is_file():
+        print("error: the viewer is not built. Run `make viewer` (or `cd web && npm ci && npm run build`).",
+              file=sys.stderr)
+        return EXIT_USAGE
+    httpd = serve(root, static, port=args.port)
+    url = f"http://127.0.0.1:{httpd.server_address[1]}"
+    st = term.style()
+    info = status(root)
+    print(st.header("🌱  beeja viewer", url))
+    print(st.kv("model", info["model"] or st(info["model_error"] or "not configured", "yellow")))
+    print(st.kv("GitHub", "token found" if info["github_auth"] else "anonymous (60 requests/hour)"))
+    print(st.kv("store", str(root / "decisions")))
+    print("\n  Paste a GitHub issue or PR URL in the viewer to import it. Ctrl+C to stop.\n")
+    if args.open:
+        webbrowser.open(url)
+    try:
+        httpd.serve_forever()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        httpd.server_close()
     return EXIT_OK
 
 
@@ -349,7 +408,8 @@ def build_parser() -> argparse.ArgumentParser:
     cd.set_defaults(func=cmd_check_diff)
 
     xw = sub.add_parser("export-web", help="write viewer data (records + cited source messages) for web/")
-    xw.add_argument("--examples", default="examples", help="directory of <case>/decision.json + input_path.txt")
+    xw.add_argument("--examples", nargs="+", default=["examples", "imports"],
+                    help="directories of <case>/decision.json + input_path.txt (default: examples imports)")
     xw.add_argument("--out", default="web/public/data")
     xw.set_defaults(func=cmd_export_web)
 
@@ -362,6 +422,20 @@ def build_parser() -> argparse.ArgumentParser:
     pv = sub.add_parser("providers", help="list supported model providers and the active one")
     pv.add_argument("--json", action="store_true")
     pv.set_defaults(func=cmd_providers)
+
+    im = sub.add_parser("import", help="import a GitHub issue/PR URL: fetch, extract, store, update the viewer")
+    im.add_argument("url")
+    im.add_argument("--reimport", action="store_true", help="replace an earlier import (old version kept in history)")
+    im.add_argument("--root", default=".", help="project root (default: current directory)")
+    im.add_argument("--json", action="store_true")
+    im.add_argument("--quiet", "-q", action="store_true")
+    im.set_defaults(func=cmd_import)
+
+    sv = sub.add_parser("serve", help="run the viewer with GitHub import at http://127.0.0.1:8765")
+    sv.add_argument("--port", type=int, default=8765)
+    sv.add_argument("--root", default=".")
+    sv.add_argument("--open", action="store_true", help="open the browser")
+    sv.set_defaults(func=cmd_serve)
 
     s = sub.add_parser("schema", help="print the DecisionRecord JSON Schema")
     s.set_defaults(func=cmd_schema)

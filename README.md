@@ -24,7 +24,7 @@ Hacktoberfest HackDay Sonipat 2026 · Problem 06: Open Source Decision Intellige
 ```bash
 make setup     # Python venv + viewer deps + creates .env from .env.example
 make demo      # colourful terminal tour: why-not, search, diff advisories, benchmark
-make viewer    # decision dossier in the browser at http://localhost:5173
+make viewer    # viewer + GitHub import at http://127.0.0.1:8765 (one command)
 ```
 
 Want to extract decisions from a new discussion? That's the only step that needs a model:
@@ -41,9 +41,57 @@ make extract FILE=benchmarks/pep-0758/input/discourse_topic.json
 | Search all recovered decisions | `beeja search "shared buffer"` | ❌ |
 | Check a code change against history | `git diff \| beeja check-diff -` | ❌ |
 | Browse dossiers with highlighted proof | `make viewer` | ❌ |
+| Import a GitHub issue / PR | paste the URL in the viewer, or `beeja import <url>` | ✅ |
 | Give a coding agent access | `beeja-mcp --store decisions` | ❌ |
 | Score against the withheld PEP answers | `make benchmark` | ❌ |
 | Extract decisions from a new thread | `beeja extract -i thread.json -o out.json` | ✅ |
+
+---
+
+## 🔗 Import any GitHub issue or PR from the viewer
+
+```bash
+make viewer      # ONE command: builds the viewer and starts it at http://127.0.0.1:8765
+```
+
+Paste a GitHub issue or pull-request URL into **Import a GitHub issue or pull request** and press
+**Import**. Beeja fetches the thread, runs the model configured in `.env`, verifies every quote,
+saves the record and opens the dossier. No API calls, JSON or folders to manage by hand.
+
+```mermaid
+sequenceDiagram
+    actor M as Maintainer
+    participant V as Viewer (browser)
+    participant S as beeja serve (localhost)
+    participant G as GitHub API
+    participant L as Model (.env)
+    M->>V: paste URL, Import
+    V->>S: POST /api/import
+    S->>G: issue/PR + all comments (paginated)
+    S->>L: extraction, outcome pass, support check
+    S->>S: verify quotes → decisions/ + imports/<case>/ + viewer data
+    V-->>S: GET /api/jobs/<id> (live progress)
+    S-->>V: done → Open dossier
+```
+
+| what | behaviour |
+|---|---|
+| **Fetched** | title, description, every issue comment (all pages); for PRs also review submissions with text and inline review comments (with reply links). Not fetched: reactions, edit history, commits/diffs. |
+| **Stored** | `imports/<case>/` (input, recorded model exchanges, record) and `decisions/<id>.json`, the same store the CLI and MCP read. |
+| **Viewer data** | always regenerated from `examples/` **and** `imports/`, so restarting never drops an import. |
+| **Repeat import** | refused with "Already imported → Open / Re-import". Re-import moves the previous version to `imports/<case>/history/<time>/`; nothing is overwritten. |
+| **Errors** | invalid URL, not found / private, GitHub rate limit, network, empty thread, model not configured or unreachable, model failure. Each is shown with a hint, and success is reported only after the record and viewer data exist. |
+| **Parallel** | each import runs in its own thread, so you can keep browsing (or start another import) while one runs. |
+| **GitHub auth** | public repos need none (60 requests/hour). For more, or for private repos, set `GITHUB_TOKEN` in `.env`, or just be logged in with `gh auth login`. The token is only sent to api.github.com; it never reaches the browser, logs or generated files. |
+
+From a terminal it is the same workflow: `beeja import <url> [--reimport]` or `make import URL=<url>`.
+The server listens on 127.0.0.1 only.
+
+**Real example:** [pingdotgg/t3code#665](https://github.com/pingdotgg/t3code/issues/665) ("Option to
+delete non-empty Project", 2 messages, closed). qwen3:4b recovered one alternative, a confirmation
+dialog before deleting a non-empty project, as **`proposed` / uncertain**. Nobody in the thread states
+an outcome, so Beeja does not invent one, even though the issue is closed. Committed under
+`imports/gh-pingdotgg-t3code-issue-665/`.
 
 ---
 

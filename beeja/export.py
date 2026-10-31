@@ -91,15 +91,19 @@ def to_portable_text(rec: DecisionRecord) -> list[dict[str, Any]]:
     return blocks
 
 
-def export_web(examples: Path, out: Path) -> list[str]:
-    """Write ``index.json`` and one ``<id>.json`` per example for the static viewer.
+def export_web(examples: Path | list[Path], out: Path) -> list[str]:
+    """Write ``index.json`` and one ``<id>.json`` per case for the viewer.
 
-    Each decision file carries the record, a Portable Text narrative and the cited source
-    messages (only those), so the viewer can highlight passages in their real context.
+    ``examples`` is one directory of cases or a list of them (e.g. ``examples/`` and ``imports/``);
+    every directory is included, so regenerating never drops imported decisions. Each decision
+    file carries the record, a Portable Text narrative and the cited source messages (only
+    those), so the viewer can highlight passages in their real context.
     """
+    dirs = [Path(examples)] if isinstance(examples, (str, Path)) else [Path(d) for d in examples]
     out.mkdir(parents=True, exist_ok=True)
     index, written = [], []
-    for case in sorted(p for p in Path(examples).iterdir() if (p / "decision.json").is_file()):
+    cases = [(d, p) for d in dirs if d.is_dir() for p in sorted(d.iterdir()) if (p / "decision.json").is_file()]
+    for examples, case in cases:
         rec = DecisionRecord.model_validate_json((case / "decision.json").read_text(encoding="utf-8"))
         messages: dict[str, Any] = {}
         src = case / "input_path.txt"

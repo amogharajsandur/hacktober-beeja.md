@@ -51,5 +51,20 @@
   "status": "partially_decided",
   "summary": "7 alternatives recovered from 20 messages: 1 accepted, 2 rejected, 1 withdrawn, 1 deferred, 2 unresolved.",
   "topic": "quillfmt: which configuration file format should we support?"
+ },
+ {
+  "alternatives": 1,
+  "case": "gh-pingdotgg-t3code-issue-665",
+  "counts": {
+   "proposed": 1
+  },
+  "evidence_total": 1,
+  "evidence_verified": 0,
+  "id": "dec-gh-pingdotgg-t3code-issu-pingdotgg-t3code-665-feature-option-to-delete-no",
+  "question": "How to handle deleting non-empty projects in the UI?",
+  "source": "https://github.com/pingdotgg/t3code/issues/665",
+  "status": "unresolved",
+  "summary": "1 alternatives recovered from 2 messages: 1 proposed.",
+  "topic": "pingdotgg/t3code#665: Feature: Option to delete non-empty Project"
  }
 ]
