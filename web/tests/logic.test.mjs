@@ -40,3 +40,30 @@ test("exported viewer data references real records", () => {
   }
   assert.ok(readdirSync(dir).length === index.length + 1);
 });
+
+test("parseBlocks keeps exact offsets for paragraphs, code, quotes and lists", () => {
+  const body = "Intro line\nsecond line\n\ntry:\n    ...\nexcept A, B as e:\n    ...\n\n> quoted text\n\n- one\n- two";
+  const blocks = mod.parseBlocks(body);
+  assert.deepEqual(blocks.map((b) => b.kind), ["p", "code", "quote", "list"]);
+  const q = blocks[2].lines[0];
+  assert.equal(body.slice(q.s, q.e), "quoted text");
+  assert.equal(body.slice(blocks[3].lines[1].s, blocks[3].lines[1].e), "two");
+  for (const b of blocks) for (const l of b.lines) assert.ok(l.s >= 0 && l.e <= body.length && l.s <= l.e);
+});
+
+test("segments marks only the overlap with the highlight", () => {
+  const body = "abcdefghij";
+  assert.deepEqual(mod.segments(body, 2, 8, 4, 6), [
+    { text: "cd", mark: false }, { text: "ef", mark: true }, { text: "gh", mark: false },
+  ]);
+  assert.deepEqual(mod.segments(body, 0, 3, 5, 9), [{ text: "abc", mark: false }]);
+  assert.deepEqual(mod.segments(body, 0, 3, null, null), [{ text: "abc", mark: false }]);
+});
+
+test("display helpers", () => {
+  assert.equal(mod.hostOf("https://discuss.python.org/t/x/1"), "discuss.python.org");
+  assert.equal(mod.hostOf("not a url"), null);
+  assert.equal(mod.initials("pablogsal"), "PA");
+  assert.equal(mod.initials("Gregory P. Smith"), "GS");
+  assert.deepEqual(mod.countBy(["a", "b", "a"]), { a: 2, b: 1 });
+});

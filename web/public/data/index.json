@@ -2,8 +2,16 @@
  {
   "alternatives": 6,
   "case": "pep-0758",
+  "counts": {
+   "accepted": 1,
+   "rejected": 1,
+   "unresolved": 4
+  },
+  "evidence_total": 29,
+  "evidence_verified": 22,
   "id": "dec-66453-pep-758-allow-except-and-except-expressions-with",
   "question": "Should Python allow unparenthesized except and except* expressions without parentheses?",
+  "source": "https://discuss.python.org/t/pep-758-allow-except-and-except-expressions-without-parentheses/66453",
   "status": "partially_decided",
   "summary": "6 alternatives recovered from 52 messages: 1 accepted, 1 rejected, 4 unresolved.",
   "topic": "PEP 758: Allow `except` and `except*` expressions without parentheses"
@@ -11,8 +19,16 @@
  {
   "alternatives": 8,
   "case": "pep-0768",
+  "counts": {
+   "accepted": 2,
+   "rejected": 1,
+   "unresolved": 5
+  },
+  "evidence_total": 47,
+  "evidence_verified": 43,
   "id": "dec-73969-pep-768-safe-external-debugger-interface-for-cpy",
   "question": "How to implement a safe external debugger interface for CPython that allows debuggers to attach to live processes without stopping or restarting them?",
+  "source": "https://discuss.python.org/t/pep-768-safe-external-debugger-interface-for-cpython/73969",
   "status": "partially_decided",
   "summary": "8 alternatives recovered from 59 messages: 2 accepted, 1 rejected, 5 unresolved.",
   "topic": "PEP 768 – Safe external debugger interface for CPython"
@@ -20,8 +36,18 @@
  {
   "alternatives": 7,
   "case": "synthetic-config-format",
+  "counts": {
+   "accepted": 1,
+   "deferred": 1,
+   "rejected": 2,
+   "unresolved": 2,
+   "withdrawn": 1
+  },
+  "evidence_total": 21,
+  "evidence_verified": 18,
   "id": "dec-discussion-quillfmt-which-configuration-file-format-should",
   "question": "quillfmt: which configuration file format should we support?",
+  "source": null,
   "status": "partially_decided",
   "summary": "7 alternatives recovered from 20 messages: 1 accepted, 2 rejected, 1 withdrawn, 1 deferred, 2 unresolved.",
   "topic": "quillfmt: which configuration file format should we support?"

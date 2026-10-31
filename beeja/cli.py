@@ -61,7 +61,10 @@ def cmd_extract(args: argparse.Namespace) -> int:
 
     def progress(msg: str) -> None:
         if not args.quiet:
-            print(f"[beeja] {msg}", file=sys.stderr)
+            from . import term
+
+            st = term.style(sys.stderr)
+            print(st("◆ beeja ", "bcyan", "bold") + msg, file=sys.stderr)
 
     progress(f"{len(discussion.messages)} messages from {args.input}; model {provider.name}")
     if any(provider.name.startswith(p + ":") for p in ("openai", "anthropic", "gemini", "xai")):
@@ -120,8 +123,12 @@ def cmd_benchmark(args: argparse.Namespace) -> int:
         Path(args.markdown).write_text(md, encoding="utf-8")
     if args.json:
         _print_json(report)
-    else:
+    elif args.plain:
         sys.stdout.write(md)
+    else:
+        from . import pretty, term
+
+        sys.stdout.write(pretty.benchmark(term.style(), report))
     return EXIT_OK if report["summary"] else EXIT_INVALID
 
 
@@ -143,15 +150,9 @@ def cmd_search(args: argparse.Namespace) -> int:
     if args.json:
         _print_json({"query": args.query, "results": [h.as_dict() for h in hits]})
         return EXIT_OK
-    if not hits:
-        print("no matching decisions")
-    for h in hits:
-        ref = h.decision_id + (f"#{h.alternative_id}" if h.alternative_id else "")
-        print(f"{h.score:7.2f}  [{h.status}] {ref}  {h.title}")
-        if h.reason:
-            print(f"         why: {h.reason}")
-        for e in h.evidence[:1]:
-            print(f"         proof: \"{e['quote'][:150]}\" ({e['source_url'] or e['message_id']})")
+    from . import pretty, term
+
+    sys.stdout.write(pretty.search(term.style(), args.query, hits))
     return EXIT_OK
 
 
@@ -187,19 +188,9 @@ def cmd_why_not(args: argparse.Namespace) -> int:
     if args.json:
         _print_json({"idea": args.idea, "answers": out})
         return EXIT_OK
-    if not out:
-        print("No rejected, withdrawn or deferred alternative in the store matches that idea.")
-    for o in out:
-        print(f"[{o['status']}/{o['rejection_type'] or '-'}, confidence {o['confidence']}] {o['title']}")
-        for e in o["outcome_evidence"]:
-            print(f"  outcome: \"{e['quote'][:200]}\" - {e['author'] or 'unknown'} {e['source_url'] or ''}")
-        for r in o["reasons"]:
-            mark = "verified" if r["verified"] else "UNVERIFIED"
-            print(f"  - {r['reason']} ({mark})")
-            for e in r["evidence"]:
-                print(f"      \"{e['quote'][:200]}\" {e['source_url'] or e['message_id']}")
-        for n in o["notes"]:
-            print(f"  note: {n}")
+    from . import pretty, term
+
+    sys.stdout.write(pretty.why_not(term.style(), args.idea, out))
     return EXIT_OK
 
 
@@ -217,8 +208,12 @@ def cmd_check_diff(args: argparse.Namespace) -> int:
     report = check_diff(recs, text)
     if args.json:
         _print_json(report)
-    else:
+    elif args.plain:
         sys.stdout.write(render_text(report))
+    else:
+        from . import pretty, term
+
+        sys.stdout.write(pretty.advisory(term.style(), report))
     return EXIT_OK
 
 
@@ -323,6 +318,7 @@ def build_parser() -> argparse.ArgumentParser:
     b.add_argument("--outputs", default="examples", help="directory holding <case>/decision.json")
     b.add_argument("--markdown", help="also write the Markdown report here")
     b.add_argument("--json", action="store_true")
+    b.add_argument("--plain", action="store_true", help="print the Markdown report instead of the terminal view")
     b.set_defaults(func=cmd_benchmark)
 
     se = sub.add_parser("search", help="search stored decisions (offline, no model)")
@@ -349,6 +345,7 @@ def build_parser() -> argparse.ArgumentParser:
     cd.add_argument("patch", help="patch file, or - for stdin")
     cd.add_argument("--store", default="decisions")
     cd.add_argument("--json", action="store_true")
+    cd.add_argument("--plain", action="store_true", help="stable plain-text format (used for committed examples)")
     cd.set_defaults(func=cmd_check_diff)
 
     xw = sub.add_parser("export-web", help="write viewer data (records + cited source messages) for web/")
