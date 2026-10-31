@@ -213,6 +213,36 @@ def cmd_check_diff(args: argparse.Namespace) -> int:
     return EXIT_OK
 
 
+def cmd_export_web(args: argparse.Namespace) -> int:
+    from .export import export_web
+
+    if not Path(args.examples).is_dir():
+        print(f"error: not a directory: {args.examples}", file=sys.stderr)
+        return EXIT_USAGE
+    ids = export_web(Path(args.examples), Path(args.out))
+    print(f"exported {len(ids)} decisions to {args.out}", file=sys.stderr)
+    return EXIT_OK if ids else EXIT_INVALID
+
+
+def cmd_export_madr(args: argparse.Namespace) -> int:
+    from .export import to_madr
+    from .retrieval import get
+
+    recs = _load_store(args.store)
+    if recs is None:
+        return EXIT_USAGE
+    found = get(recs, args.ref)
+    if found is None:
+        print(f"error: no decision {args.ref!r}", file=sys.stderr)
+        return EXIT_INVALID
+    text = to_madr(found[0])
+    if args.output:
+        Path(args.output).write_text(text, encoding="utf-8")
+    else:
+        sys.stdout.write(text)
+    return EXIT_OK
+
+
 def cmd_schema(args: argparse.Namespace) -> int:
     _print_json(json_schema())
     return EXIT_OK
@@ -281,6 +311,17 @@ def build_parser() -> argparse.ArgumentParser:
     cd.add_argument("--store", default="decisions")
     cd.add_argument("--json", action="store_true")
     cd.set_defaults(func=cmd_check_diff)
+
+    xw = sub.add_parser("export-web", help="write viewer data (records + cited source messages) for web/")
+    xw.add_argument("--examples", default="examples", help="directory of <case>/decision.json + input_path.txt")
+    xw.add_argument("--out", default="web/public/data")
+    xw.set_defaults(func=cmd_export_web)
+
+    xm = sub.add_parser("export-madr", help="render one stored decision as a MADR Markdown document")
+    xm.add_argument("ref")
+    xm.add_argument("--store", default="decisions")
+    xm.add_argument("--output", "-o")
+    xm.set_defaults(func=cmd_export_madr)
 
     s = sub.add_parser("schema", help="print the DecisionRecord JSON Schema")
     s.set_defaults(func=cmd_schema)

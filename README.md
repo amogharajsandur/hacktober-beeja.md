@@ -6,9 +6,9 @@ the result as validated, evidence-linked JSON decision records.
 
 Hacktoberfest HackDay Sonipat 2026 — Problem 06: Open Source Decision Intelligence and Knowledge Recovery.
 
-> Status: Phase 4. Ingestion, chunked extraction with a real local open-weight model, quote
+> Status: Phase 5. Ingestion, chunked extraction with a real local open-weight model, quote
 > verification, a support-checking second pass, a PEP benchmark with withheld ground truth,
-> offline search / get / "why not X?" and PR-diff advisories work today.
+> offline search / get / "why not X?", PR-diff advisories and a read-only decision viewer work today.
 
 ## Install
 
@@ -112,6 +112,27 @@ and from which message, lists the accepted / rejected alternatives with a verifi
 link, and marks the alternatives whose wording the change itself uses. It is informational only:
 Beeja never blocks, rejects or comments on a PR. See `examples/check-diff/` for a related C
 change, a related Python change and an unrelated docs change (no advisory).
+
+## Decision dossier (web viewer)
+
+A read-only React + TypeScript viewer in `web/` renders the real records: decision list with
+filter, one page per decision with status, alternatives, reasons, confidence, notes, code
+anchors and sources. Clicking any evidence chip shows the quote **highlighted inside the original
+source message**, with its verification and support verdicts; unverified quotes are struck
+through and never presented as proof. Every page says the content is AI-extracted and not
+human-reviewed. The short narrative is Portable Text rendered with `@portabletext/react`; it is
+generated deterministically from the structured record (facts stay in the JSON, not in rich text).
+
+```bash
+beeja export-web --examples examples --out web/public/data   # records + only the cited messages
+cd web && npm ci && npm run dev                               # http://localhost:5173
+npm run build && npm test                                     # what CI runs
+```
+
+The viewer is optional: every record is equally available through `beeja search` / `beeja get`.
+
+Exports: `beeja export-madr <dec-id> --store decisions` renders a basic MADR document
+(unverified evidence is labelled).
 
 ## Benchmark
 

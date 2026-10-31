@@ -1,0 +1,29 @@
+[
+ {
+  "alternatives": 6,
+  "case": "pep-0758",
+  "id": "dec-66453-pep-758-allow-except-and-except-expressions-with",
+  "question": "Should Python allow unparenthesized except and except* expressions without parentheses?",
+  "status": "partially_decided",
+  "summary": "6 alternatives recovered from 52 messages: 1 accepted, 1 rejected, 4 unresolved.",
+  "topic": "PEP 758: Allow `except` and `except*` expressions without parentheses"
+ },
+ {
+  "alternatives": 8,
+  "case": "pep-0768",
+  "id": "dec-73969-pep-768-safe-external-debugger-interface-for-cpy",
+  "question": "How to implement a safe external debugger interface for CPython that allows debuggers to attach to live processes without stopping or restarting them?",
+  "status": "partially_decided",
+  "summary": "8 alternatives recovered from 59 messages: 2 accepted, 6 unresolved.",
+  "topic": "PEP 768 – Safe external debugger interface for CPython"
+ },
+ {
+  "alternatives": 7,
+  "case": "synthetic-config-format",
+  "id": "dec-discussion-quillfmt-which-configuration-file-format-should",
+  "question": "quillfmt: which configuration file format should we support?",
+  "status": "partially_decided",
+  "summary": "7 alternatives recovered from 20 messages: 1 proposed, 1 accepted, 2 rejected, 1 withdrawn, 1 deferred, 1 unresolved.",
+  "topic": "quillfmt: which configuration file format should we support?"
+ }
+]
