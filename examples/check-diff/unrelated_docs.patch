@@ -1,0 +1,6 @@
+diff --git a/Doc/library/threading.rst b/Doc/library/threading.rst
+--- a/Doc/library/threading.rst
++++ b/Doc/library/threading.rst
+@@ -12,3 +12,3 @@
+-A debugger can inspect each thread's buffer of pending calls; see the externel guide.
++A debugger can inspect each thread's buffer of pending calls; see the external guide.

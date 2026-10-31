@@ -6,9 +6,9 @@ the result as validated, evidence-linked JSON decision records.
 
 Hacktoberfest HackDay Sonipat 2026 — Problem 06: Open Source Decision Intelligence and Knowledge Recovery.
 
-> Status: Phase 3. Ingestion, chunked extraction with a real local open-weight model, quote
-> verification, a second model pass that checks whether evidence supports each outcome, and a
-> PEP benchmark with withheld ground truth work today. Retrieval and diff advisories land next.
+> Status: Phase 4. Ingestion, chunked extraction with a real local open-weight model, quote
+> verification, a support-checking second pass, a PEP benchmark with withheld ground truth,
+> offline search / get / "why not X?" and PR-diff advisories work today.
 
 ## Install
 
@@ -86,6 +86,33 @@ whose messages start with `[id] author (role): text`.
 Three separate questions are kept apart in every `Evidence` item: does the cited message exist,
 does the passage occur in it (`verification`), and does it support the claim (`support`).
 
+## Retrieval and diff advisories (offline, no model)
+
+`decisions/` is the canonical store (one JSON file per decision). It currently holds the three
+real `qwen3:4b` records from `examples/`.
+
+```bash
+beeja search "why not a single shared buffer" --store decisions          # ranked alternatives
+beeja search "yaml" --store decisions --negative-only --json
+beeja get dec-73969-pep-768-safe-external-debugger-interface-for-cpy#alt-8 --store decisions
+beeja why-not "YAML config" --store decisions       # rejected/withdrawn/deferred + verified reasons
+beeja check-diff examples/check-diff/related_quillfmt_yaml.patch --store decisions
+git diff main | beeja check-diff - --store decisions --json
+```
+
+**Code anchors** are extracted deterministically from the discussion text: file paths, C/Python
+symbols (`PyThreadState`, `sys.remote_exec`), GitHub PR/issue refs (`gh-12345`). Each records
+which messages mention it. Links into other repositories and very generic names (`sys.path`)
+are skipped.
+
+**`check-diff`** reports a decision only when the change has an *explicit* link to it: a changed
+file matches an anchored path, a changed line uses an anchored symbol, or a changed line refers to
+an anchored file. Topic keywords alone never trigger an advisory. Every advisory says what matched
+and from which message, lists the accepted / rejected alternatives with a verified quote and
+link, and marks the alternatives whose wording the change itself uses. It is informational only:
+Beeja never blocks, rejects or comments on a PR. See `examples/check-diff/` for a related C
+change, a related Python change and an unrelated docs change (no advisory).
+
 ## Benchmark
 
 ```bash
@@ -127,7 +154,8 @@ byte-for-byte.
 
 `examples/<case>/` holds the input path, the raw recorded model exchanges
 (`model_exchanges.jsonl`, real `qwen3:4b` output with timing stats) and the resulting
-`decision.json`.
+`decision.json`. `examples/check-diff/` holds sample patches (written by the team) with the
+actual advisories produced against `decisions/`; tests require both to stay current.
 
 ## License
 

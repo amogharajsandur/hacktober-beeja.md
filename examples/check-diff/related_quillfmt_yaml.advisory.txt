@@ -1,0 +1,22 @@
+Changed files: src/quillfmt/config.py
+
+== dec-discussion-quillfmt-which-configuration-file-format-should (score 2.5)
+   quillfmt: which configuration file format should we support?
+   matched because:
+   - reference: src/quillfmt/config.py ~ pyproject.toml (mentioned in q1, q10, q13)
+   - keywords: * ~ pyproject.toml, yaml (topic words)
+   [rejected] YAML file (confidence high)  <- this change uses: yaml
+       why: YAML worries me. Its implicit typing means a value like no silently becomes false, and we would need PyYAML as a new runtime dependency
+       proof: "YAML worries me. Its implicit typing means a value like no silently becomes false, and we would need PyYAML as a new runtime dependency." - ines q3
+   [accepted] TOML inside pyproject.toml (confidence high)  <- this change uses: pyproject.toml
+       why: TOML can be read with tomllib, which is in the standard library from Python 3.11, and pyproject.toml is where Python tools keep settings now
+       proof: "TOML can be read with tomllib, which is in the standard library from Python 3.11, and pyproject.toml is where Python tools keep settings now." - raj q10
+   [rejected] INI file (confidence high)
+       why: INI cannot express nested tables or lists cleanly. Our per-language overrides need nesting, so INI would force awkward dotted keys
+       proof: "INI cannot express nested tables or lists cleanly. Our per-language overrides need nesting, so INI would force awkward dotted keys." - ines q6
+   [withdrawn] Plain Python file (confidence medium)
+       proof: "You're right about CI. I withdraw the Python config file idea." - lee q9
+   [deferred] Standalone .quillfmt.toml file (confidence medium)
+       proof: "Good idea, but let's postpone the standalone .quillfmt.toml file until after 1.0, because it needs its own file discovery rules." - maya q15
+
+Informational historical context only. Beeja does not approve, block or comment on changes.

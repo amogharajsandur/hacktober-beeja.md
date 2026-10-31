@@ -1,0 +1,14 @@
+diff --git a/src/quillfmt/config.py b/src/quillfmt/config.py
+--- a/src/quillfmt/config.py
++++ b/src/quillfmt/config.py
+@@ -1,8 +1,14 @@
+ import tomllib
++import yaml
+ 
+ def load_config(root):
+-    data = tomllib.loads((root / "pyproject.toml").read_text())
++    if (root / ".quillfmt.yaml").exists():
++        data = yaml.safe_load((root / ".quillfmt.yaml").read_text())
++    else:
++        data = tomllib.loads((root / "pyproject.toml").read_text())
+     return data.get("tool", {}).get("quillfmt", {})

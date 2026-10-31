@@ -116,6 +116,103 @@ def cmd_benchmark(args: argparse.Namespace) -> int:
     return EXIT_OK if report["summary"] else EXIT_INVALID
 
 
+def _load_store(path: str):
+    try:
+        return storage.load_dir(Path(path))
+    except storage.StorageError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return None
+
+
+def cmd_search(args: argparse.Namespace) -> int:
+    from .retrieval import search
+
+    recs = _load_store(args.store)
+    if recs is None:
+        return EXIT_USAGE
+    hits = search(recs, args.query, limit=args.limit, negative_only=args.negative_only)
+    if args.json:
+        _print_json({"query": args.query, "results": [h.as_dict() for h in hits]})
+        return EXIT_OK
+    if not hits:
+        print("no matching decisions")
+    for h in hits:
+        ref = h.decision_id + (f"#{h.alternative_id}" if h.alternative_id else "")
+        print(f"{h.score:7.2f}  [{h.status}] {ref}  {h.title}")
+        if h.reason:
+            print(f"         why: {h.reason}")
+        for e in h.evidence[:1]:
+            print(f"         proof: \"{e['quote'][:150]}\" ({e['source_url'] or e['message_id']})")
+    return EXIT_OK
+
+
+def cmd_get(args: argparse.Namespace) -> int:
+    from .retrieval import get
+
+    recs = _load_store(args.store)
+    if recs is None:
+        return EXIT_USAGE
+    found = get(recs, args.ref)
+    if found is None:
+        print(f"error: no decision {args.ref!r} in {args.store}", file=sys.stderr)
+        return EXIT_INVALID
+    rec, alt = found
+    data = rec.model_dump(mode="json")
+    if alt is not None:
+        ev = rec.evidence_by_id()
+        ids = set(alt.status_evidence + alt.supporting_evidence + alt.opposing_evidence)
+        ids.update(i for r in alt.reasons for i in r.evidence_ids)
+        data = {"decision_id": rec.id, "question": rec.question, "alternative": alt.model_dump(mode="json"),
+                "evidence": [ev[i].model_dump(mode="json") for i in sorted(ids) if i in ev]}
+    _print_json(data)
+    return EXIT_OK
+
+
+def cmd_why_not(args: argparse.Namespace) -> int:
+    from .retrieval import why_not
+
+    recs = _load_store(args.store)
+    if recs is None:
+        return EXIT_USAGE
+    out = why_not(recs, args.idea)
+    if args.json:
+        _print_json({"idea": args.idea, "answers": out})
+        return EXIT_OK
+    if not out:
+        print("No rejected, withdrawn or deferred alternative in the store matches that idea.")
+    for o in out:
+        print(f"[{o['status']}/{o['rejection_type'] or '-'}, confidence {o['confidence']}] {o['title']}")
+        for e in o["outcome_evidence"]:
+            print(f"  outcome: \"{e['quote'][:200]}\" - {e['author'] or 'unknown'} {e['source_url'] or ''}")
+        for r in o["reasons"]:
+            mark = "verified" if r["verified"] else "UNVERIFIED"
+            print(f"  - {r['reason']} ({mark})")
+            for e in r["evidence"]:
+                print(f"      \"{e['quote'][:200]}\" {e['source_url'] or e['message_id']}")
+        for n in o["notes"]:
+            print(f"  note: {n}")
+    return EXIT_OK
+
+
+def cmd_check_diff(args: argparse.Namespace) -> int:
+    from .diff import check_diff, render_text
+
+    recs = _load_store(args.store)
+    if recs is None:
+        return EXIT_USAGE
+    try:
+        text = sys.stdin.read() if args.patch == "-" else Path(args.patch).read_text(encoding="utf-8")
+    except OSError as exc:
+        print(f"error: cannot read patch: {exc}", file=sys.stderr)
+        return EXIT_USAGE
+    report = check_diff(recs, text)
+    if args.json:
+        _print_json(report)
+    else:
+        sys.stdout.write(render_text(report))
+    return EXIT_OK
+
+
 def cmd_schema(args: argparse.Namespace) -> int:
     _print_json(json_schema())
     return EXIT_OK
@@ -158,6 +255,32 @@ def build_parser() -> argparse.ArgumentParser:
     b.add_argument("--markdown", help="also write the Markdown report here")
     b.add_argument("--json", action="store_true")
     b.set_defaults(func=cmd_benchmark)
+
+    se = sub.add_parser("search", help="search stored decisions (offline, no model)")
+    se.add_argument("query")
+    se.add_argument("--store", default="decisions")
+    se.add_argument("--limit", type=int, default=10)
+    se.add_argument("--negative-only", action="store_true", help="only rejected/withdrawn/deferred/superseded")
+    se.add_argument("--json", action="store_true")
+    se.set_defaults(func=cmd_search)
+
+    g = sub.add_parser("get", help="print one decision (dec-id) or alternative (dec-id#alt-n) as JSON")
+    g.add_argument("ref")
+    g.add_argument("--store", default="decisions")
+    g.add_argument("--json", action="store_true", help="accepted for symmetry; output is always JSON")
+    g.set_defaults(func=cmd_get)
+
+    w = sub.add_parser("why-not", help='source-grounded answer to "why not X?"')
+    w.add_argument("idea")
+    w.add_argument("--store", default="decisions")
+    w.add_argument("--json", action="store_true")
+    w.set_defaults(func=cmd_why_not)
+
+    cd = sub.add_parser("check-diff", help="report stored decisions explicitly linked to a unified diff")
+    cd.add_argument("patch", help="patch file, or - for stdin")
+    cd.add_argument("--store", default="decisions")
+    cd.add_argument("--json", action="store_true")
+    cd.set_defaults(func=cmd_check_diff)
 
     s = sub.add_parser("schema", help="print the DecisionRecord JSON Schema")
     s.set_defaults(func=cmd_schema)

@@ -1,0 +1,15 @@
+diff --git a/Include/cpython/pystate.h b/Include/cpython/pystate.h
+--- a/Include/cpython/pystate.h
++++ b/Include/cpython/pystate.h
+@@ -110,9 +110,6 @@ struct _ts {
+-    /* Per-thread remote debugger support */
+-    _PyRemoteDebuggerSupport remote_debugger_support;
++    /* moved to a single runtime-wide buffer, see _PyRuntime */
+ };
+diff --git a/Include/internal/pycore_runtime.h b/Include/internal/pycore_runtime.h
+--- a/Include/internal/pycore_runtime.h
++++ b/Include/internal/pycore_runtime.h
+@@ -40,6 +40,8 @@ typedef struct pyruntimestate {
++    /* One shared debugger buffer for every PyThreadState */
++    char debugger_script_path[4096];
+ } _PyRuntimeState;

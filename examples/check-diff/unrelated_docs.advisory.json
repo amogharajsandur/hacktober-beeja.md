@@ -1,0 +1,7 @@
+{
+  "advisories": [],
+  "files_changed": [
+    "Doc/library/threading.rst"
+  ],
+  "note": "Informational historical context only. Beeja does not approve, block or comment on changes."
+}
