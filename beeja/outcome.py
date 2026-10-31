@@ -64,6 +64,8 @@ def _words(text: str) -> set[str]:
 
 def related_messages(d: Discussion, seeds: set[str], title: str) -> list[SourceMessage]:
     by_id = {m.message_id: m for m in d.messages}
+    # order by place in the discussion, not by ``position`` (unset unless loaded via load_discussion)
+    order = {m.message_id: i for i, m in enumerate(d.messages)}
     picked = {s for s in seeds if s in by_id}
     if not picked:
         return []
@@ -73,12 +75,12 @@ def related_messages(d: Discussion, seeds: set[str], title: str) -> list[SourceM
         picked |= nxt
         frontier = nxt
     starter = d.messages[0].author_id
-    first = min(by_id[s].position for s in picked)
+    first = min(order[s] for s in picked)
     key = _words(title)
-    for m in d.messages:
-        if m.author_id and m.author_id == starter and m.position > first and len(key & _words(m.body)) >= 2:
+    for i, m in enumerate(d.messages):
+        if m.author_id and m.author_id == starter and i > first and len(key & _words(m.body)) >= 2:
             picked.add(m.message_id)
-    msgs = sorted((by_id[i] for i in picked), key=lambda m: m.position)
+    msgs = sorted((by_id[i] for i in picked), key=lambda m: order[m.message_id])
     out, total = [], 0
     for m in msgs:
         if total + len(m.body) > MAX_CHARS and out:

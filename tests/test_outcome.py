@@ -44,3 +44,19 @@ def test_outcome_pass_cannot_invent_outcome(scripted):
                "status_quote": "The steering council vetoed global buffers forever", "reasons": []}
     rec = extract(THREAD, scripted([chunk, outcome]), support_check=False)
     assert rec.alternatives[0].status == "unresolved"
+
+
+def test_message_order_independent_of_hash_seed():
+    """Regression: ordering must follow the discussion, not set iteration (PYTHONHASHSEED)."""
+    import os
+    import subprocess
+    import sys
+
+    code = ("from tests.test_outcome import THREAD; from beeja.outcome import related_messages; "
+            "print([m.message_id for m in related_messages(THREAD, {'p2', 'p4'}, 'Single global scratch buffer')])")
+    outs = {
+        subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, check=True,
+                       env={**os.environ, "PYTHONHASHSEED": str(seed)}).stdout.strip()
+        for seed in range(8)
+    }
+    assert outs == {"['p2', 'p4']"}

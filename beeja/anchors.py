@@ -58,7 +58,7 @@ def find_anchors(d: Discussion, max_anchors: int = 40) -> list[CodeAnchor]:
         for n in _BPO.findall(body):
             add("issue", f"bpo-{n}", m.message_id)
 
-    order = {m.message_id: m.position for m in d.messages}
+    order = {m.message_id: i for i, m in enumerate(d.messages)}
     ranked = sorted(seen.items(), key=lambda kv: (-len(kv[1]), order.get(kv[1][0], 0), kv[0]))
     return [
         CodeAnchor(kind=k, value=v, repository=repo[(k, v)], note="mentioned in " + ", ".join(mids[:6]))
