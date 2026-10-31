@@ -326,7 +326,7 @@ def extract(
 def build_record(
     d: Discussion, clusters: list[Cluster], questions: list[str], *, provider_name: str, n_chunks: int
 ) -> DecisionRecord:
-    order = {m.message_id: m.position for m in d.messages}
+    order = {m.message_id: i for i, m in enumerate(d.messages)}
     evidence: dict[str, Evidence] = {}
 
     def ev(mid: str, quote: str) -> Evidence | None:
