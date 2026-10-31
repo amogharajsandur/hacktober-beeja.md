@@ -6,9 +6,55 @@ the result as validated, evidence-linked JSON decision records.
 
 Hacktoberfest HackDay Sonipat 2026 — Problem 06: Open Source Decision Intelligence and Knowledge Recovery.
 
-> Status: Phase 6. Ingestion, chunked extraction with a real local open-weight model, quote
-> verification, a support-checking second pass, a PEP benchmark with withheld ground truth,
-> offline search / get / "why not X?", PR-diff advisories, a read-only decision viewer and a read-only MCP server work today.
+## Why not just search, or ask an LLM for a summary?
+
+* **Search finds messages, not decisions.** The outcome of "should we do X?" is usually spread
+  over a proposal, a dozen objections and one sentence from the PEP author forty posts later.
+* **A summary flattens alternatives** and silently turns "nobody answered the objection" into
+  "rejected". Beeja keeps every alternative separate, with its own status, and treats silence
+  as `unresolved`.
+* **An LLM answer has no proof.** Every Beeja outcome and reason points at a passage that was
+  found verbatim in the cited message and then checked to actually say that. What fails those
+  checks is kept for review, flagged, and never shown as proof.
+
+## Architecture
+
+```
+ discussion (.json Discourse / GitHub / native, .txt/.md)        beeja fetch-discourse (optional)
+        │
+        ▼
+  ingest ──► chunk (message boundaries) ──► qwen3:4b extraction per chunk ──► cluster alternatives
+                                                   (Ollama, JSON schema)          │
+        ┌──────────────────────────────────────────────────────────────────────┘
+        ▼
+  reply-tree outcome pass (qwen3:4b, unresolved alternatives only)
+        ▼
+  evidence resolution (deterministic: exact / approximate / not_found / missing_message)
+        ▼
+  status resolution (deterministic: only verified claims count; silence ≠ rejection)
+        ▼
+  support check (qwen3:4b, can only withhold or downgrade) ──► DecisionRecord (Pydantic, JSON)
+                                                                        │
+                       decisions/  (one deterministic JSON file per decision)
+            ┌────────────────┬───────────────┬──────────────┬─────────────┬──────────────┐
+         CLI search/get   why-not      check-diff      MCP server      web viewer     benchmark
+```
+
+One engine, several interfaces: the CLI, MCP server, diff advisory and viewer all read the same
+records through the same functions. Everything after extraction is offline and model-free.
+
+## Results at a glance
+
+From the committed real runs (`benchmarks/RESULTS.md`, 3 cases, 8 ground-truth items — small,
+indicative only):
+
+| metric | value |
+|---|---|
+| rejected/deferred/withdrawn ideas recovered | 5 / 8 (recall 0.625; 0.714 on ideas actually raised in the threads) |
+| precision of negative claims | 0.8 (1 unmatched: PEP 758 "backport to 3.12/3.13", a real idea the PEP doesn't list) |
+| correct reasons recovered, all backed by verified quotes | 3 |
+| quotes found verbatim in the cited message | 85% (the rest are flagged, never used as proof) |
+| open questions correctly *not* reported as decided (synthetic) | 3 / 3 |
 
 ## Install
 
@@ -210,8 +256,10 @@ ruff check .
 pytest -q
 ```
 
-`.github/workflows/ci.yml` runs lint, a CLI smoke test and the test suite on Python 3.11 and
-3.12 for every pull request to `main` and every push to `main`. CI never calls a live model:
+`.github/workflows/ci.yml` runs on every pull request to `main` and every push to `main`:
+lint, CLI and `beeja-mcp` smoke tests and the full test suite on Python 3.11 and 3.12, plus a
+`viewer-build` job that regenerates the viewer data from the committed records (must be
+unchanged), then type-checks, builds and tests the React viewer. CI never calls a live model:
 unit tests use scripted responses, and `tests/test_examples_regression.py` replays the recorded
 real `qwen3:4b` exchanges in `examples/` and requires the committed outputs to be reproduced
 byte-for-byte.
@@ -222,6 +270,30 @@ byte-for-byte.
 (`model_exchanges.jsonl`, real `qwen3:4b` output with timing stats) and the resulting
 `decision.json`. `examples/check-diff/` holds sample patches (written by the team) with the
 actual advisories produced against `decisions/`; tests require both to stay current.
+
+## Known limitations
+
+* **Small model, small benchmark.** `qwen3:4b` sometimes names an idea from the opposite side
+  (PEP 758's `as`-clause idea) or attaches a general "PEP accepted" sentence to sub-features; the
+  support check withholds what it cannot confirm, which costs recall. Three cases and eight
+  ground-truth items cannot support strong claims.
+* **Memorisation.** Verified quotes show an outcome is *in the text*; they do not prove the
+  model did not also remember the PEP. The synthetic case is the control.
+* **Matching is keyword-based.** Benchmark matching uses transparent concept groups; clustering
+  of repeated mentions is title-based; search ranking is lexical.
+* **One decision record per discussion**, with several alternatives inside it.
+* **No decision authority.** `decision_authority` stays `null`: forum `admin` flags are not
+  treated as proof of who decided.
+* **Code anchors come only from the discussion text.** No repository checkout, symbol lineage or
+  rename tracking.
+* The viewer and MCP server are read-only by design; nothing is posted to real projects.
+
+## Roadmap (not implemented)
+
+GitHub App PR comments, tree-sitter symbol lineage across renames, closed-PR / reverted-commit
+ingestion with diff similarity, executable premises ("rejected because Python 3.9 is supported"
+→ revisit when that changes), cross-platform contributor identity, supersession timelines,
+human review workflow for records, larger multi-PEP benchmark.
 
 ## License
 
