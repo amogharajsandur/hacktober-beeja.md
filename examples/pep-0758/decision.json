@@ -81,6 +81,7 @@
       "status_evidence": [
         "ev-68afbb168a"
       ],
+      "status_support": "supports",
       "supporting_evidence": [
         "ev-620eb54e8c",
         "ev-53f340e737",
@@ -95,10 +96,12 @@
     },
     {
       "alternative_id": "alt-2",
-      "confidence": "high",
+      "confidence": "uncertain",
       "description": "Proposed to keep parentheses mandatory for cases with multiple exceptions and the 'as' clause",
       "mentions": [],
-      "notes": [],
+      "notes": [
+        "support check: cited passage does not support 'rejected' (checker read it as 'none'); outcome withheld"
+      ],
       "opposing_evidence": [
         "ev-ff1c3cba2e",
         "ev-c47dfb5519"
@@ -122,11 +125,12 @@
           "text": "Parentheses create inconsistency in binding behavior when using 'as' with multiple exceptions"
         }
       ],
-      "rejection_type": "explicit",
-      "status": "rejected",
+      "rejection_type": null,
+      "status": "unresolved",
       "status_evidence": [
         "ev-a33bf2ed94"
       ],
+      "status_support": "does_not_support",
       "supporting_evidence": [
         "ev-faeb126626",
         "ev-d18d3dbc55",
@@ -162,6 +166,7 @@
       "status_evidence": [
         "ev-e91fc8167e"
       ],
+      "status_support": "supports",
       "supporting_evidence": [
         "ev-fcd8def467",
         "ev-77559d31dd"
@@ -180,6 +185,7 @@
       "rejection_type": null,
       "status": "unresolved",
       "status_evidence": [],
+      "status_support": "unchecked",
       "supporting_evidence": [
         "ev-af25162906",
         "ev-a0a331bd62",
@@ -199,6 +205,7 @@
       "rejection_type": null,
       "status": "unresolved",
       "status_evidence": [],
+      "status_support": "unchecked",
       "supporting_evidence": [
         "ev-2c883b1dfc",
         "ev-a0a331bd62",
@@ -229,6 +236,7 @@
       "rejection_type": null,
       "status": "unresolved",
       "status_evidence": [],
+      "status_support": "unchecked",
       "supporting_evidence": [
         "ev-a0a331bd62",
         "ev-e74416336a"
@@ -392,7 +400,7 @@
       "source_hash": "sha256:e3305ba7a16c4c91c733a9d4e433104177f38dbe99427e5d5668ad3701d75b20",
       "source_url": "https://discuss.python.org/t/pep-758-allow-except-and-except-expressions-without-parentheses/66453/11",
       "start_offset": 0,
-      "support": "unchecked",
+      "support": "supports",
       "verification": "exact"
     },
     {
@@ -588,7 +596,7 @@
       "source_hash": "sha256:b47f47690fac59c3a5916ae6c87d931e923cd3b146a78416b3bc2251f697a1a0",
       "source_url": "https://discuss.python.org/t/pep-758-allow-except-and-except-expressions-without-parentheses/66453/56",
       "start_offset": 0,
-      "support": "unchecked",
+      "support": "does_not_support",
       "verification": "exact"
     },
     {
@@ -630,7 +638,7 @@
       "source_hash": "sha256:e7232eaa57a416913d867fd59a04594e35cc41c18260440d2376c692df79a750",
       "source_url": "https://discuss.python.org/t/pep-758-allow-except-and-except-expressions-without-parentheses/66453/63",
       "start_offset": 0,
-      "support": "unchecked",
+      "support": "supports",
       "verification": "exact"
     }
   ],
@@ -640,10 +648,11 @@
     "chunks": 5,
     "evidence_total": 28,
     "evidence_verified": 21,
-    "extractor": "extract-v2",
+    "extractor": "extract-v2+support-v2",
     "human_reviewed": false,
     "messages": 52,
-    "model": "ollama:qwen3:4b"
+    "model": "ollama:qwen3:4b",
+    "support_checks": 4
   },
   "presentation": null,
   "question": "Should Python allow unparenthesized except and except* expressions without parentheses?",
@@ -653,7 +662,7 @@
     "https://discuss.python.org/t/pep-758-allow-except-and-except-expressions-without-parentheses/66453"
   ],
   "status": "partially_decided",
-  "summary": "6 alternatives recovered from 52 messages: 1 accepted, 2 rejected, 3 unresolved.",
+  "summary": "6 alternatives recovered from 52 messages: 1 accepted, 1 rejected, 4 unresolved.",
   "superseded_by": [],
   "supersedes": [],
   "topic": "PEP 758: Allow `except` and `except*` expressions without parentheses",

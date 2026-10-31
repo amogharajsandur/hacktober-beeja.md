@@ -6,9 +6,9 @@ the result as validated, evidence-linked JSON decision records.
 
 Hacktoberfest HackDay Sonipat 2026 — Problem 06: Open Source Decision Intelligence and Knowledge Recovery.
 
-> Status: Phase 2. Ingestion, chunked extraction with a real local open-weight model, quote
-> verification and `validate` work today. Benchmark, retrieval and diff advisories land in later
-> phases; this README is updated as each one is merged.
+> Status: Phase 3. Ingestion, chunked extraction with a real local open-weight model, quote
+> verification, a second model pass that checks whether evidence supports each outcome, and a
+> PEP benchmark with withheld ground truth work today. Retrieval and diff advisories land next.
 
 ## Install
 
@@ -76,6 +76,26 @@ whose messages start with `[id] author (role): text`.
    latest verified claim by message position wins; criticism without a stated decision is
    `unresolved`, never `rejected`. A rejection is `explicit` only if the verified passage itself
    states an outcome, otherwise `inferred` with `low` confidence.
+6. **Support check** (second model pass, `beeja/support.py`) — for every accepted / rejected /
+   withdrawn / deferred outcome, the model sees only the claim and the surrounding source text
+   and must say whether the passage actually states that outcome for that alternative. It can
+   only weaken a finding: `does_not_support` sends the outcome back to `unresolved` with a note,
+   `weak` lowers confidence. It never flips or upgrades an outcome. Up to two reasons per
+   negative outcome are checked the same way. Disable with `--no-support-check`.
+
+Three separate questions are kept apart in every `Evidence` item: does the cited message exist,
+does the passage occur in it (`verification`), and does it support the claim (`support`).
+
+## Benchmark
+
+```bash
+beeja benchmark --dataset benchmarks --outputs examples
+```
+
+Scores the committed real-model outputs against ground truth taken from the final PEPs, which
+the model never sees. See [benchmarks/README.md](benchmarks/README.md) for the cases, the
+matching rule (fixed before scoring) and limitations, and
+[benchmarks/RESULTS.md](benchmarks/RESULTS.md) for the actual numbers.
 
 `python -m beeja ...` is equivalent to `beeja ...`.
 

@@ -1,0 +1,117 @@
+{
+  "case": "pep-0768",
+  "input": "input/discourse_topic.json",
+  "reference": "Final PEP 768 text, section 'Rejected Ideas' (https://peps.python.org/pep-0768/). Used only for scoring; never given to the model.",
+  "discussion": "https://discuss.python.org/t/73969",
+  "items": [
+    {
+      "id": "768-r1",
+      "title": "Debugger writes Python source code (instead of a path to a script file) into the remote buffer",
+      "expected_status": [
+        "rejected",
+        "withdrawn",
+        "superseded"
+      ],
+      "match_all": [
+        [
+          "code",
+          "source",
+          "script content",
+          "string"
+        ],
+        [
+          "buffer",
+          "write",
+          "inject"
+        ]
+      ],
+      "exclude_any": [
+        "single buffer",
+        "shared buffer",
+        "one buffer",
+        "runtime buffer",
+        "runtime-level"
+      ],
+      "complement": {
+        "match_all": [
+          [
+            "path",
+            "file"
+          ],
+          [
+            "script",
+            "code",
+            "python"
+          ]
+        ],
+        "status": [
+          "accepted"
+        ]
+      },
+      "reason_any": [
+        "secur",
+        "attacker",
+        "arbitrary",
+        "escalat",
+        "permission",
+        "safe"
+      ],
+      "in_discussion": true
+    },
+    {
+      "id": "768-r2",
+      "title": "Use a single shared runtime-level buffer for all debugger communication instead of per-thread buffers",
+      "expected_status": [
+        "rejected",
+        "withdrawn",
+        "superseded"
+      ],
+      "match_all": [
+        [
+          "single",
+          "shared",
+          "one ",
+          "global",
+          "runtime",
+          "pyruntime",
+          "static",
+          "pointer"
+        ],
+        [
+          "buffer",
+          "scratch"
+        ]
+      ],
+      "complement": {
+        "match_all": [
+          [
+            "per-thread",
+            "per thread",
+            "thread state",
+            "each thread",
+            "pythreadstate"
+          ],
+          [
+            "buffer"
+          ]
+        ],
+        "status": [
+          "accepted"
+        ]
+      },
+      "reason_any": [
+        "thread",
+        "multiple debugger",
+        "coordinat",
+        "serializ",
+        "independ",
+        "concurren"
+      ],
+      "in_discussion": true
+    }
+  ],
+  "leak_canaries": [
+    "would force serialization of all debugging operations",
+    "deemed more secure than writing the Python code itself"
+  ]
+}

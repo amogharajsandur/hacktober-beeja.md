@@ -1,0 +1,133 @@
+{
+  "case": "synthetic-config-format",
+  "input": "input/discussion.txt",
+  "reference": "SYNTHETIC discussion written by the team for this benchmark (not a real project), so the model cannot have memorised its outcome. Answers below are by construction.",
+  "items": [
+    {
+      "id": "syn-r1",
+      "title": "Dedicated YAML configuration file",
+      "expected_status": [
+        "rejected"
+      ],
+      "match_all": [
+        [
+          "yaml"
+        ]
+      ],
+      "reason_any": [
+        "implicit typing",
+        "typing",
+        "no becomes false",
+        "pyyaml",
+        "dependenc"
+      ],
+      "in_discussion": true
+    },
+    {
+      "id": "syn-r2",
+      "title": "INI file via configparser",
+      "expected_status": [
+        "rejected"
+      ],
+      "match_all": [
+        [
+          "ini",
+          "configparser"
+        ]
+      ],
+      "reason_any": [
+        "nest",
+        "dotted",
+        "list"
+      ],
+      "in_discussion": true
+    },
+    {
+      "id": "syn-w1",
+      "title": "Python configuration file (quillfmt_config.py)",
+      "expected_status": [
+        "withdrawn",
+        "rejected"
+      ],
+      "match_all": [
+        [
+          "python file",
+          "python config",
+          ".py",
+          "quillfmt_config",
+          "python script",
+          "executable"
+        ]
+      ],
+      "reason_any": [
+        "secur",
+        "untrusted",
+        "execut"
+      ],
+      "in_discussion": true
+    },
+    {
+      "id": "syn-d1",
+      "title": "Standalone .quillfmt.toml file",
+      "expected_status": [
+        "deferred"
+      ],
+      "match_all": [
+        [
+          "standalone",
+          ".quillfmt.toml",
+          "separate",
+          "non-python"
+        ]
+      ],
+      "reason_any": [
+        "discovery",
+        "1.0"
+      ],
+      "in_discussion": true
+    }
+  ],
+  "accepted": [
+    {
+      "id": "syn-a1",
+      "title": "[tool.quillfmt] in pyproject.toml read with tomllib/tomli",
+      "match_all": [
+        [
+          "pyproject",
+          "tomllib"
+        ]
+      ]
+    }
+  ],
+  "open": [
+    {
+      "id": "syn-u1",
+      "title": "JSON configuration",
+      "match_all": [
+        [
+          "json"
+        ]
+      ],
+      "expected_status": [
+        "unresolved",
+        "proposed"
+      ]
+    },
+    {
+      "id": "syn-u2",
+      "title": "Environment variable overrides",
+      "match_all": [
+        [
+          "environment",
+          "env var",
+          "quillfmt_line_length"
+        ]
+      ],
+      "expected_status": [
+        "unresolved",
+        "proposed"
+      ]
+    }
+  ],
+  "leak_canaries": []
+}

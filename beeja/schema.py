@@ -147,6 +147,7 @@ class Alternative(_Model):
     supporting_evidence: list[str] = Field(default_factory=list)
     opposing_evidence: list[str] = Field(default_factory=list)
     status_evidence: list[str] = Field(default_factory=list)
+    status_support: Support = Support.unchecked  # support-check verdict for *this* outcome claim
     proponents: list[str] = Field(default_factory=list)
     confidence: Confidence = Confidence.uncertain
     mentions: list[str] = Field(default_factory=list)

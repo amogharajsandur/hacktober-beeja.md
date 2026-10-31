@@ -30,7 +30,7 @@ from .schema import (
     SourceMessage,
 )
 
-PROMPT_VERSION = "extract-v2"
+PROMPT_VERSION = "extract-v2+support-v2"
 STATUSES = [s.value for s in AlternativeStatus]
 
 SYSTEM = """You analyse software design discussions and recover the decision history.
@@ -269,6 +269,7 @@ def extract(
     provider: ModelProvider,
     *,
     max_chars: int = 7000,
+    support_check: bool = True,
     progress=None,
 ) -> DecisionRecord:
     chunks = chunk_discussion(d, max_chars=max_chars)
@@ -305,7 +306,12 @@ def extract(
                     (str(a.get("stance")), str(a.get("text") or "").strip(),
                      str(a.get("message_id") or ""), str(a.get("quote") or ""))
                 )
-    return build_record(d, clusters, questions, provider_name=provider.name, n_chunks=len(chunks))
+    record = build_record(d, clusters, questions, provider_name=provider.name, n_chunks=len(chunks))
+    if support_check:
+        from .support import verify_support
+
+        verify_support(record, d, provider, progress=progress)
+    return finalize(record, len(d.messages))
 
 
 def build_record(
@@ -376,31 +382,15 @@ def build_record(
             )
         )
 
-    statuses = [a.status for a in alternatives]
-    if "accepted" in statuses:
-        dstatus = DecisionStatus.partially_decided if "unresolved" in statuses else DecisionStatus.decided
-    elif any(s in TERMINAL for s in statuses):
-        dstatus = DecisionStatus.partially_decided
-    else:
-        dstatus = DecisionStatus.unresolved
-    counts = {s: statuses.count(s) for s in STATUSES if statuses.count(s)}
-    summary = (
-        f"{len(alternatives)} alternatives recovered from {len(d.messages)} messages: "
-        + ", ".join(f"{n} {s}" for s, n in counts.items())
-        + "." if alternatives else "No alternatives recovered."
-    )
     question = _pick_question(questions) or (d.title or "")
     verified_n = sum(1 for e in evidence.values() if is_verified(e))
     return DecisionRecord(
         id=f"dec-{_slug(d.thread_id, 24)}-{_slug(d.title or 'discussion')}".rstrip("-"),
         question=question,
-        summary=summary,
         topic=d.title or "",
-        status=dstatus,
         alternatives=alternatives,
         evidence=sorted(evidence.values(), key=lambda e: (order.get(e.message_id, 1 << 30), e.evidence_id)),
         source_threads=[d.source_url or d.thread_id],
-        confidence=Confidence.uncertain if dstatus == DecisionStatus.unresolved else Confidence.medium,
         decided_at=None,
         metadata={
             "extractor": PROMPT_VERSION,
@@ -413,6 +403,26 @@ def build_record(
             "human_reviewed": False,
         },
     )
+
+
+def finalize(record: DecisionRecord, n_messages: int) -> DecisionRecord:
+    """Derive decision-level status, confidence and summary from the alternatives."""
+    statuses = [a.status for a in record.alternatives]
+    if "accepted" in statuses:
+        dstatus = DecisionStatus.partially_decided if "unresolved" in statuses else DecisionStatus.decided
+    elif any(s in TERMINAL for s in statuses):
+        dstatus = DecisionStatus.partially_decided
+    else:
+        dstatus = DecisionStatus.unresolved
+    counts = {s: statuses.count(s) for s in STATUSES if statuses.count(s)}
+    record.status = dstatus
+    record.confidence = Confidence.uncertain if dstatus == DecisionStatus.unresolved else Confidence.medium
+    record.summary = (
+        f"{len(statuses)} alternatives recovered from {n_messages} messages: "
+        + ", ".join(f"{n} {s}" for s, n in counts.items()) + "."
+        if statuses else "No alternatives recovered."
+    )
+    return record
 
 
 def _pick_question(questions: list[str]) -> str:

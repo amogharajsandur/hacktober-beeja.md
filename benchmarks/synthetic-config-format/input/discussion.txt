@@ -1,0 +1,21 @@
+# quillfmt: which configuration file format should we support?
+[q1] maya (maintainer): quillfmt needs a configuration file before 1.0. The options I see are TOML inside pyproject.toml, a dedicated YAML file, or an INI file. Opinions welcome.
+[q2] tomas: YAML please. Everyone already knows it from CI configs, and it reads nicely.
+[q3] ines: YAML worries me. Its implicit typing means a value like no silently becomes false, and we would need PyYAML as a new runtime dependency.
+[q4] tomas: Fair, but a safe loader avoids the worst problems, and PyYAML is everywhere anyway.
+[q5] raj: INI through configparser is in the standard library, so it costs zero dependencies.
+[q6] ines: INI cannot express nested tables or lists cleanly. Our per-language overrides need nesting, so INI would force awkward dotted keys.
+[q7] lee: What about a plain Python file, quillfmt_config.py, so people can compute settings dynamically?
+[q8] maya (maintainer): Executing user Python just to read configuration is a security risk when quillfmt runs in CI on untrusted pull requests. I am against it.
+[q9] lee: You're right about CI. I withdraw the Python config file idea.
+[q10] raj: TOML can be read with tomllib, which is in the standard library from Python 3.11, and pyproject.toml is where Python tools keep settings now.
+[q11] tomas: We still support Python 3.9 and 3.10, where tomllib does not exist.
+[q12] raj: tomli is a tiny backport with the same API, and we only need it on Python older than 3.11.
+[q13] maya (maintainer): Decision: we will read a [tool.quillfmt] table from pyproject.toml using tomllib, with tomli on older Pythons. YAML is rejected because of the implicit typing surprises and the extra dependency. INI is rejected because it cannot express nested overrides.
+[q14] nina: Could we also support a standalone .quillfmt.toml file for repositories that are not Python projects?
+[q15] maya (maintainer): Good idea, but let's postpone the standalone .quillfmt.toml file until after 1.0, because it needs its own file discovery rules.
+[q16] ines: Separately, should we accept JSON configuration too? I could go either way.
+[q17] tomas: JSON has no comments, which is painful for configuration files people edit by hand.
+[q18] ines: True, although JSON5 would fix that. I have no strong opinion.
+[q19] omar: Another thought: environment variables such as QUILLFMT_LINE_LENGTH could override the file settings.
+[q20] raj: Environment overrides would be handy in CI. +1 from me.

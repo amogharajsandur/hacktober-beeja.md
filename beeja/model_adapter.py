@@ -101,23 +101,51 @@ class OllamaProvider:
 
 
 class RecordingProvider:
+    """Calls the live model and records each exchange.
+
+    If the recording already holds a response for the *identical* (model, system, prompt, schema)
+    it is reused instead of calling the model again, so re-running after a change to a later
+    pipeline stage only spends inference on prompts that changed. ``compact()`` rewrites the
+    file with exactly the exchanges used by the latest run, in call order.
+    """
+
     def __init__(self, inner: OllamaProvider, path: Path) -> None:
         self.inner = inner
         self.name = inner.name
         self.path = Path(path)
         self.path.parent.mkdir(parents=True, exist_ok=True)
+        self._existing: dict[str, dict[str, Any]] = {}
+        if self.path.is_file():
+            for line in self.path.read_text(encoding="utf-8").splitlines():
+                if line.strip():
+                    rec = json.loads(line)
+                    if rec.get("model") == inner.model:
+                        self._existing[rec["key"]] = rec
+        self.used: list[dict[str, Any]] = []
+        self.reused = 0
 
     def generate_json(self, system: str, prompt: str, schema: dict[str, Any]) -> dict[str, Any]:
-        out = self.inner.generate_json(system, prompt, schema)
-        rec = {
-            "key": exchange_key(self.inner.model, system, prompt, schema),
-            "model": self.inner.model,
-            "response": out,
-            "stats": self.inner.calls[-1] if self.inner.calls else None,
-        }
-        with self.path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(rec, ensure_ascii=False, sort_keys=True) + "\n")
-        return out
+        key = exchange_key(self.inner.model, system, prompt, schema)
+        if key in self._existing:
+            self.reused += 1
+            rec = self._existing[key]
+        else:
+            out = self.inner.generate_json(system, prompt, schema)
+            rec = {"key": key, "model": self.inner.model, "response": out,
+                   "stats": self.inner.calls[-1] if self.inner.calls else None}
+            self._existing[key] = rec
+            with self.path.open("a", encoding="utf-8") as f:
+                f.write(json.dumps(rec, ensure_ascii=False, sort_keys=True) + "\n")
+        self.used.append(rec)
+        return rec["response"]
+
+    def compact(self) -> None:
+        seen, lines = set(), []
+        for rec in self.used:
+            if rec["key"] not in seen:
+                seen.add(rec["key"])
+                lines.append(json.dumps(rec, ensure_ascii=False, sort_keys=True))
+        self.path.write_text("\n".join(lines) + ("\n" if lines else ""), encoding="utf-8")
 
 
 class ReplayProvider:
