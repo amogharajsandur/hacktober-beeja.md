@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { PortableText } from "@portabletext/react";
 import type { Alternative, DecisionPayload, Evidence, IndexEntry, SourceMessage } from "./types";
-import { highlight, statusOrder } from "./logic";
+import { DECIDED, countBy, hostOf, hue, initials, parseBlocks, segments, statusOrder } from "./logic";
 
 type Load<T> = { state: "loading" } | { state: "error"; message: string } | { state: "ok"; data: T };
 
@@ -32,120 +32,246 @@ function useHashRoute(): string {
   return hash;
 }
 
+const ICON: Record<string, string> = {
+  accepted: "✔", rejected: "✕", withdrawn: "↩", deferred: "⏸", superseded: "⇢", unresolved: "?", proposed: "•",
+  decided: "✔", partially_decided: "◐",
+};
+const LABEL: Record<string, string> = { partially_decided: "partially decided" };
+
 export function App() {
   const hash = useHashRoute();
   const m = hash.match(/^#\/d\/([^/?#]+)(?:\/(ev-[0-9a-f]+))?/);
+  const page = m?.[1];
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [page]);
   return (
-    <div className="page">
+    <div className="shell">
       <header className="top">
-        <a href="#/" className="brand">beeja<span>.md</span></a>
-        <span className="tag">decision dossier · read-only</span>
+        <a href="#/" className="brand">
+          <span className="logo">b</span>beeja<span className="dim">.md</span>
+        </a>
+        <span className="tagline">what was decided, what was rejected, why — and where's the proof</span>
       </header>
       {m ? <DecisionView id={decodeURIComponent(m[1])} focus={m[2] ?? null} /> : <DecisionList />}
+      <footer className="foot">Read-only dossier · records extracted by an open-weight model and verified against the source text</footer>
     </div>
   );
 }
 
-function Status({ s }: { s: string }) {
-  return <span className={`badge st-${s}`}>{s.replace("_", " ")}</span>;
+function Pill({ s, small }: { s: string; small?: boolean }) {
+  return (
+    <span className={`pill st-${s} ${small ? "sm" : ""}`}>
+      <span className="ico">{ICON[s] ?? "•"}</span>
+      {LABEL[s] ?? s}
+    </span>
+  );
 }
+
+function Favicon({ url, size = 16 }: { url: string | null | undefined; size?: number }) {
+  const host = hostOf(url);
+  // try the site's own favicon, then a favicon service, then a neutral glyph
+  const [attempt, setAttempt] = useState(0);
+  const srcs = host ? [`https://${host}/favicon.ico`, `https://www.google.com/s2/favicons?domain=${host}&sz=64`] : [];
+  if (attempt >= srcs.length) return <span className="globe" style={{ width: size, height: size }}>◎</span>;
+  return (
+    <img className="favicon" src={srcs[attempt]} width={size} height={size} alt="" onError={() => setAttempt((n) => n + 1)} />
+  );
+}
+
+function Tiles({ counts, verified, total }: { counts: Record<string, number>; verified?: number; total?: number }) {
+  const order = ["accepted", "rejected", "withdrawn", "deferred", "superseded", "unresolved", "proposed"];
+  return (
+    <div className="tiles">
+      {order.filter((s) => counts[s]).map((s) => (
+        <div key={s} className={`tile st-${s}`}>
+          <span className="num">{counts[s]}</span>
+          <span className="lbl">{s}</span>
+        </div>
+      ))}
+      {total ? (
+        <div className="tile verify">
+          <span className="num">
+            {verified}
+            <span className="of">/{total}</span>
+          </span>
+          <span className="lbl">quotes verified</span>
+          <span className="bar">
+            <span style={{ width: `${Math.round(((verified ?? 0) / total) * 100)}%` }} />
+          </span>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+// ------------------------------------------------------------------ list
 
 function DecisionList() {
   const idx = useJson<IndexEntry[]>("./data/index.json");
   const [q, setQ] = useState("");
-  if (idx.state === "loading") return <p className="muted">Loading decisions…</p>;
+  if (idx.state === "loading") return <Skeleton />;
   if (idx.state === "error")
     return (
-      <p className="error">
-        Could not load <code>data/index.json</code> ({idx.message}). Run <code>beeja export-web</code> first; the CLI
-        (<code>beeja search</code>, <code>beeja get</code>) works without the viewer.
-      </p>
+      <div className="empty error">
+        <h2>No decision data yet</h2>
+        <p>
+          Could not load <code>data/index.json</code> ({idx.message}). Run <code>make viewer</code> (or{" "}
+          <code>beeja export-web</code>) first. Everything is also available from the CLI: <code>beeja search</code>.
+        </p>
+      </div>
     );
   const items = idx.data.filter((d) => (d.question + " " + d.topic + " " + d.summary).toLowerCase().includes(q.toLowerCase()));
   return (
-    <main>
-      <h1>Recovered decisions</h1>
-      <input className="search" placeholder="Filter by question or topic" value={q} onChange={(e) => setQ(e.target.value)} />
-      {items.length === 0 && <p className="muted">No decisions match “{q}”.</p>}
-      <ul className="cards">
+    <main className="list">
+      <section className="hero">
+        <h1>Recovered decisions</h1>
+        <p className="lead">
+          Each dossier lists every alternative that was discussed, what happened to it, and the exact sentences that
+          prove it.
+        </p>
+        <div className="searchbox">
+          <span>⌕</span>
+          <input placeholder="Filter by question or topic…" value={q} onChange={(e) => setQ(e.target.value)} />
+        </div>
+      </section>
+      {items.length === 0 && <div className="empty">No decisions match “{q}”.</div>}
+      <div className="grid-cards">
         {items.map((d) => (
-          <li key={d.id} className="card">
-            <a href={`#/d/${encodeURIComponent(d.id)}`}>
-              <div className="row">
-                <Status s={d.status} />
-                <span className="muted small">{d.topic}</span>
-              </div>
-              <h2>{d.question}</h2>
-              <p className="muted">{d.summary}</p>
-            </a>
-          </li>
+          <a key={d.id} className="dcard" href={`#/d/${encodeURIComponent(d.id)}`}>
+            <div className="row">
+              <Pill s={d.status} small />
+              <span className="source">
+                <Favicon url={d.source} size={14} /> {hostOf(d.source) ?? "local file"}
+              </span>
+            </div>
+            <h2>{d.question}</h2>
+            <p className="topic">{d.topic}</p>
+            {d.counts && <Tiles counts={d.counts} verified={d.evidence_verified} total={d.evidence_total} />}
+            <span className="open">Open dossier →</span>
+          </a>
         ))}
-      </ul>
+      </div>
     </main>
   );
 }
 
+function Skeleton() {
+  return (
+    <div className="skeleton">
+      <div />
+      <div />
+      <div />
+    </div>
+  );
+}
+
+// ------------------------------------------------------------------ dossier
+
+type Filter = "all" | "decided" | "open";
+
 function DecisionView({ id, focus }: { id: string; focus: string | null }) {
   const res = useJson<DecisionPayload>(`./data/${encodeURIComponent(id)}.json`);
   const [selected, setSelected] = useState<string | null>(focus);
-  useEffect(() => setSelected(focus), [focus]);
-  if (res.state === "loading") return <p className="muted">Loading decision…</p>;
-  if (res.state === "error") return <p className="error">Decision {id} could not be loaded ({res.message}).</p>;
+  const [filter, setFilter] = useState<Filter>("all");
+  useEffect(() => {
+    setSelected(focus);
+  }, [focus]);
+  if (res.state === "loading") return <Skeleton />;
+  if (res.state === "error")
+    return (
+      <div className="empty error">
+        Decision <code>{id}</code> could not be loaded ({res.message}). <a href="#/">Back to all decisions</a>
+      </div>
+    );
   const { record, narrative, narrative_generated, messages } = res.data;
   const ev = Object.fromEntries(record.evidence.map((e) => [e.evidence_id, e]));
-  const alts = [...record.alternatives].sort((a, b) => statusOrder(a.status) - statusOrder(b.status));
+  const counts = countBy(record.alternatives.map((a) => a.status));
   const meta = record.metadata as Record<string, string | number | boolean>;
+  const decidedN = record.alternatives.filter((a) => DECIDED.has(a.status)).length;
+  const alts = [...record.alternatives]
+    .sort((a, b) => statusOrder(a.status) - statusOrder(b.status))
+    .filter((a) => filter === "all" || (filter === "decided") === DECIDED.has(a.status));
+  const source = record.source_threads.find((s) => s.startsWith("http"));
+  const tabs: [Filter, number][] = [
+    ["all", record.alternatives.length],
+    ["decided", decidedN],
+    ["open", record.alternatives.length - decidedN],
+  ];
   return (
     <main className="dossier">
-      <a href="#/" className="muted small">← all decisions</a>
-      <div className="row">
-        <Status s={record.status} />
-        <span className="muted small">{record.topic}</span>
-      </div>
-      <h1>{record.question}</h1>
-      <div className="notice">
-        AI-extracted by <code>{String(meta.model)}</code> ({String(meta.extractor)}) — not human-reviewed. Outcomes are
-        only shown as decided when a cited passage was found verbatim in the source and passed the support check.
-        {" "}{String(meta.evidence_verified)}/{String(meta.evidence_total)} quotes verified.
-      </div>
+      <a href="#/" className="back">← All decisions</a>
+      <section className="hero">
+        <div className="row">
+          <Pill s={record.status} />
+          {source && (
+            <a className="source link" href={source} target="_blank" rel="noreferrer">
+              <Favicon url={source} /> {hostOf(source)} ↗
+            </a>
+          )}
+        </div>
+        <h1>{record.question}</h1>
+        <p className="topic">{record.topic}</p>
+        <Tiles counts={counts} verified={Number(meta.evidence_verified)} total={Number(meta.evidence_total)} />
+        <div className="ai-note">
+          <span className="badge-ai">AI-extracted</span>
+          <span>
+            by <code>{String(meta.model)}</code> from {String(meta.messages)} messages · not human-reviewed. An outcome
+            is shown only when its quote was found verbatim in the source and passed a support check.
+          </span>
+        </div>
+      </section>
+
       {narrative.length > 0 && (
-        <section className="narrative">
+        <section className="card narrative">
+          <h3 className="eyebrow">Summary</h3>
           <PortableText value={narrative as never} />
-          {narrative_generated && <p className="muted small">Narrative generated from the structured record.</p>}
+          {narrative_generated && <p className="fine">Generated from the structured record.</p>}
         </section>
       )}
-      <div className="grid">
+
+      <div className="layout">
         <section>
-          <h2>Alternatives</h2>
+          <div className="toolbar">
+            <h2>Alternatives</h2>
+            <div className="tabs" role="tablist">
+              {tabs.map(([f, n]) => (
+                <button key={f} role="tab" aria-selected={filter === f} className={filter === f ? "on" : ""} onClick={() => setFilter(f)}>
+                  {f} <span className="n">{n}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+          {alts.length === 0 && <div className="empty">Nothing in this view.</div>}
           {alts.map((a) => (
-            <AltCard key={a.alternative_id} a={a} ev={ev} onPick={setSelected} selected={selected} />
+            <AltCard key={a.alternative_id} a={a} ev={ev} messages={messages} onPick={setSelected} selected={selected} />
           ))}
+
           {record.code_anchors.length > 0 && (
-            <>
-              <h2>Code anchors</h2>
-              <p className="muted small">Paths, symbols and references the discussion itself mentions.</p>
-              <ul className="anchors">
+            <section className="card">
+              <h3 className="eyebrow">Code anchors</h3>
+              <p className="fine">Files, symbols and references the discussion itself mentions — used by <code>beeja check-diff</code>.</p>
+              <div className="chips">
                 {record.code_anchors.map((c) => (
-                  <li key={c.kind + c.value}>
-                    <span className="kind">{c.kind}</span> <code>{c.value}</code> <span className="muted small">{c.note}</span>
-                  </li>
+                  <span key={c.kind + c.value} className={`chip k-${c.kind}`} title={c.note ?? ""}>
+                    <span className="k">{c.kind}</span>
+                    <code>{c.value}</code>
+                  </span>
                 ))}
-              </ul>
-            </>
+              </div>
+            </section>
           )}
-          <h2>Sources</h2>
-          <ul>
-            {record.source_threads.map((s) => (
-              <li key={s}>{s.startsWith("http") ? <a href={s}>{s}</a> : s}</li>
-            ))}
-          </ul>
         </section>
+
         <aside>
-          <h2>Evidence</h2>
           {selected && ev[selected] ? (
-            <EvidencePanel e={ev[selected]} msg={messages[ev[selected].message_id]} />
+            <PostCard e={ev[selected]} msg={messages[ev[selected].message_id]} onClose={() => setSelected(null)} />
           ) : (
-            <p className="muted">Select a quote to see it highlighted in its source message.</p>
+            <div className="card hint">
+              <div className="hint-ico">❝</div>
+              <h3>Inspect the proof</h3>
+              <p>Click any quote or post chip to open the original message with the cited passage highlighted.</p>
+            </div>
           )}
         </aside>
       </div>
@@ -153,80 +279,188 @@ function DecisionView({ id, focus }: { id: string; focus: string | null }) {
   );
 }
 
-function EvRef({ id, ev, onPick, selected, support }: { id: string; ev: Record<string, Evidence>; onPick: (s: string) => void; selected: string | null; support?: Evidence["support"] }) {
-  const e = ev[id];
+function verifiedOk(e: Evidence) {
+  return e.verification === "exact" || e.verification === "approximate";
+}
+
+type ChipProps = {
+  id: string;
+  ev: Record<string, Evidence>;
+  messages: Record<string, SourceMessage>;
+  onPick: (s: string) => void;
+  selected: string | null;
+  support?: Evidence["support"];
+};
+
+function EvChip(props: ChipProps) {
+  const e = props.ev[props.id];
   if (!e) return null;
-  const ok = e.verification === "exact" || e.verification === "approximate";
-  // an outcome chip shows the verdict for *this* claim; one passage may back several claims
-  const sup = support ?? e.support;
+  const ok = verifiedOk(e);
+  const sup = props.support ?? e.support;
+  const author = props.messages[e.message_id]?.author ?? e.author;
   return (
-    <button className={`evref ${ok ? "" : "bad"} ${selected === id ? "sel" : ""}`} onClick={() => onPick(id)} title={e.quote}>
-      {e.message_id} · {e.verification}
-      {sup !== "unchecked" ? ` · ${sup.replace(/_/g, " ")}` : ""}
+    <button
+      className={`evchip ${ok ? "ok" : "bad"} ${props.selected === props.id ? "sel" : ""}`}
+      onClick={() => props.onPick(props.id)}
+      title={ok ? e.quote : "Not found in the cited message — not used as proof"}
+    >
+      <span className="av sm" style={{ ["--h" as string]: hue(author) }}>{initials(author)}</span>
+      {e.message_id}
+      <span className={`dot v-${e.verification}`} />
+      {sup !== "unchecked" && <span className={`sup s-${sup}`}>{sup.replace(/_/g, " ")}</span>}
     </button>
   );
 }
 
-function AltCard(props: { a: Alternative; ev: Record<string, Evidence>; onPick: (s: string) => void; selected: string | null }) {
-  const { a } = props;
+function AltCard(props: {
+  a: Alternative;
+  ev: Record<string, Evidence>;
+  messages: Record<string, SourceMessage>;
+  onPick: (s: string) => void;
+  selected: string | null;
+}) {
+  const { a, ev, messages, onPick, selected } = props;
+  const chip = { ev, messages, onPick, selected };
+  const outcome = a.status_evidence.map((i) => ev[i]).find((e) => e && verifiedOk(e));
+  const conf = { high: 3, medium: 2, low: 1, uncertain: 0 }[a.confidence] ?? 0;
   return (
-    <article className={`alt alt-${a.status}`}>
-      <div className="row">
-        <Status s={a.status} />
-        {a.rejection_type && <span className="badge ghost">{a.rejection_type}</span>}
-        <span className="badge ghost">confidence: {a.confidence}</span>
-      </div>
+    <article className={`alt st-border-${a.status}`}>
+      <header>
+        <Pill s={a.status} small />
+        {a.rejection_type && <span className="tag">{a.rejection_type}</span>}
+        <span className="conf" title={`confidence: ${a.confidence}`}>
+          {[1, 2, 3].map((i) => (
+            <i key={i} className={i <= conf ? "on" : ""} />
+          ))}
+          {a.confidence}
+        </span>
+      </header>
       <h3>{a.title}</h3>
-      {a.description && <p>{a.description}</p>}
-      {a.status_evidence.length > 0 && (
-        <p className="small">
-          Outcome evidence: {a.status_evidence.map((i) => <EvRef key={i} id={i} {...props} support={a.status_support} />)}
+      {a.description && a.description !== a.title && <p className="desc">{a.description}</p>}
+
+      {outcome && DECIDED.has(a.status) && (
+        <button className={`outcome ${selected === outcome.evidence_id ? "sel" : ""}`} onClick={() => onPick(outcome.evidence_id)}>
+          <span className="q">“{outcome.quote}”</span>
+          <span className="by">
+            — {messages[outcome.message_id]?.author ?? outcome.author ?? "unknown"}, {outcome.message_id} · view in post →
+          </span>
+        </button>
+      )}
+
+      {a.reasons.length > 0 && (
+        <div className="reasons">
+          <h4>{a.status === "accepted" ? "Why it was chosen" : DECIDED.has(a.status) ? "Why not" : "Arguments raised"}</h4>
+          <ul>
+            {a.reasons.map((r, i) => (
+              <li key={i} className={r.supported ? "" : "unsup"}>
+                <span>{r.text}</span>
+                <span className="evs">
+                  {r.evidence_ids.map((id) => (
+                    <EvChip key={id} id={id} {...chip} />
+                  ))}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {a.status_evidence.length > 0 && !(outcome && DECIDED.has(a.status)) && (
+        <p className="fine cited">
+          Cited outcome{" "}
+          {a.status_evidence.map((i) => (
+            <EvChip key={i} id={i} {...chip} support={a.status_support} />
+          ))}
         </p>
       )}
-      {a.reasons.length > 0 && (
-        <ul className="reasons">
-          {a.reasons.map((r, i) => (
-            <li key={i} className={r.supported ? "" : "unsup"}>
-              {r.text} {r.evidence_ids.map((id) => <EvRef key={id} id={id} {...props} />)}
-              {!r.supported && <span className="muted small"> (unverified)</span>}
-            </li>
-          ))}
-        </ul>
-      )}
       {a.notes.map((n) => (
-        <p key={n} className="note small">⚠ {n}</p>
+        <p key={n} className="callout">⚠ {n}</p>
       ))}
     </article>
   );
 }
 
-function EvidencePanel({ e, msg }: { e: Evidence; msg: SourceMessage | undefined }) {
-  const parts = useMemo(() => (msg ? highlight(msg.body, e.start_offset, e.end_offset) : null), [msg, e]);
+function PostCard({ e, msg, onClose }: { e: Evidence; msg: SourceMessage | undefined; onClose: () => void }) {
+  const markRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    markRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, [e.evidence_id]);
+  const author = msg?.author ?? e.author;
+  const blocks = useMemo(() => (msg ? parseBlocks(msg.body) : []), [msg]);
+  const ok = verifiedOk(e);
+  const url = msg?.source_url ?? e.source_url;
+  const date = msg?.created_at ?? e.created_at;
+  let first = true;
+  const render = (s: number, en: number) =>
+    segments(msg!.body, s, en, ok ? e.start_offset : null, ok ? e.end_offset : null).map((seg, i) => {
+      if (!seg.mark) return <span key={i}>{seg.text}</span>;
+      const isFirst = first;
+      first = false;
+      return (
+        <mark key={i} ref={isFirst ? (el) => { markRef.current = el; } : undefined}>
+          {seg.text}
+        </mark>
+      );
+    });
   return (
-    <div className="evpanel">
-      <p className="small">
-        <strong>{e.author ?? "author unknown (quoted reply)"}</strong> · {e.message_id}
-        {e.created_at && <> · {e.created_at.slice(0, 10)}</>}
-        {e.source_url && (
-          <>
-            {" "}· <a href={e.source_url}>original post ↗</a>
-          </>
-        )}
-      </p>
-      <p className="small">
-        Verification: <strong>{e.verification}</strong> · Support: <strong>{e.support.replace(/_/g, " ")}</strong>
-      </p>
-      {parts ? (
-        <pre className="msg">
-          {parts.before}
-          <mark>{parts.match}</mark>
-          {parts.after}
-        </pre>
+    <div className="card post">
+      <div className="post-head">
+        <span className="av" style={{ ["--h" as string]: hue(author) }}>{initials(author)}</span>
+        <div className="who">
+          <strong>{author ?? "author unknown (quoted reply)"}</strong>
+          <span className="fine">
+            {msg?.role && <span className="role">{msg.role}</span>}
+            {e.message_id}
+            {msg?.reply_to && <> · replying to {msg.reply_to}</>}
+            {date && <> · {date.slice(0, 10)}</>}
+          </span>
+        </div>
+        <button className="x" onClick={onClose} aria-label="Close">×</button>
+      </div>
+      <div className="badges">
+        <span className={`vbadge v-${e.verification}`}>{ok ? "✔" : "✕"} quote {e.verification.replace("_", " ")}</span>
+        {e.support !== "unchecked" && <span className={`vbadge s-${e.support}`}>support: {e.support.replace(/_/g, " ")}</span>}
+      </div>
+      {msg ? (
+        <div className="md">
+          {blocks.map((b, i) =>
+            b.kind === "code" ? (
+              <pre key={i}>
+                {b.lines.map((l, j) => (
+                  <span key={j}>
+                    {render(l.s, l.e)}
+                    {"\n"}
+                  </span>
+                ))}
+              </pre>
+            ) : b.kind === "quote" ? (
+              <blockquote key={i}>
+                {b.lines.map((l, j) => (
+                  <span key={j}>{render(l.s, l.e)} </span>
+                ))}
+              </blockquote>
+            ) : b.kind === "list" ? (
+              <ul key={i}>
+                {b.lines.map((l, j) => (
+                  <li key={j}>{render(l.s, l.e)}</li>
+                ))}
+              </ul>
+            ) : (
+              <p key={i}>
+                {b.lines.map((l, j) => (
+                  <span key={j}>{render(l.s, l.e)} </span>
+                ))}
+              </p>
+            ),
+          )}
+        </div>
       ) : (
-        <blockquote className={e.verification === "exact" || e.verification === "approximate" ? "" : "bad"}>{e.quote}</blockquote>
+        <blockquote className={ok ? "" : "bad"}>{e.quote}</blockquote>
       )}
-      {(e.verification === "not_found" || e.verification === "missing_message") && (
-        <p className="error small">This passage was not found in the cited message and is not used as proof.</p>
+      {!ok && <p className="callout bad">This passage was not found in the cited message, so it is never used as proof.</p>}
+      {url && (
+        <a className="open-src" href={url} target="_blank" rel="noreferrer">
+          <Favicon url={url} /> Open original on {hostOf(url)} ↗
+        </a>
       )}
     </div>
   );

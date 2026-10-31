@@ -1,88 +1,180 @@
-# beeja.md
+<div align="center">
 
-Beeja recovers **what was decided, what was rejected, why, and where the proof is** from
-scattered open-source engineering discussions (PEP threads, issues, PR reviews), and stores
-the result as validated, evidence-linked JSON decision records.
+# 🌱 beeja.md
 
-Hacktoberfest HackDay Sonipat 2026 — Problem 06: Open Source Decision Intelligence and Knowledge Recovery.
+**What was decided, what was rejected, why — and where's the proof?**
 
-## Why not just search, or ask an LLM for a summary?
+Beeja reads long open-source design discussions (PEP threads, issues, PR reviews) and recovers
+every alternative that was considered, what happened to it and the exact sentences that prove
+it, as validated, evidence-linked JSON.
 
-* **Search finds messages, not decisions.** The outcome of "should we do X?" is usually spread
-  over a proposal, a dozen objections and one sentence from the PEP author forty posts later.
-* **A summary flattens alternatives** and silently turns "nobody answered the objection" into
-  "rejected". Beeja keeps every alternative separate, with its own status, and treats silence
-  as `unresolved`.
-* **An LLM answer has no proof.** Every Beeja outcome and reason points at a passage that was
-  found verbatim in the cited message and then checked to actually say that. What fails those
-  checks is kept for review, flagged, and never shown as proof.
+![Python](https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white)
+![Model](https://img.shields.io/badge/model-qwen3%3A4b%20(local)-7c3aed)
+![License](https://img.shields.io/badge/license-MIT-green)
+![CI](https://github.com/amogharajsandur/hacktober-beeja.md/actions/workflows/ci.yml/badge.svg)
 
-## Architecture
+Hacktoberfest HackDay Sonipat 2026 · Problem 06: Open Source Decision Intelligence and Knowledge Recovery
 
-```
- discussion (.json Discourse / GitHub / native, .txt/.md)        beeja fetch-discourse (optional)
-        │
-        ▼
-  ingest ──► chunk (message boundaries) ──► qwen3:4b extraction per chunk ──► cluster alternatives
-                                                   (Ollama, JSON schema)          │
-        ┌──────────────────────────────────────────────────────────────────────┘
-        ▼
-  reply-tree outcome pass (qwen3:4b, unresolved alternatives only)
-        ▼
-  evidence resolution (deterministic: exact / approximate / not_found / missing_message)
-        ▼
-  status resolution (deterministic: only verified claims count; silence ≠ rejection)
-        ▼
-  support check (qwen3:4b, can only withhold or downgrade) ──► DecisionRecord (Pydantic, JSON)
-                                                                        │
-                       decisions/  (one deterministic JSON file per decision)
-            ┌────────────────┬───────────────┬──────────────┬─────────────┬──────────────┐
-         CLI search/get   why-not      check-diff      MCP server      web viewer     benchmark
+</div>
+
+---
+
+## ⚡ Start here (3 commands, no model needed)
+
+```bash
+make setup     # Python venv + viewer deps + creates .env from .env.example
+make demo      # colourful terminal tour: why-not, search, diff advisories, benchmark
+make viewer    # decision dossier in the browser at http://localhost:5173
 ```
 
-One engine, several interfaces: the CLI, MCP server, diff advisory and viewer all read the same
-records through the same functions. Everything after extraction is offline and model-free.
+Want to extract decisions from a new discussion? That's the only step that needs a model:
 
-## Results at a glance
+```bash
+# 1. open .env and set BEEJA_PROVIDER / BEEJA_MODEL / BEEJA_BASE_URL / BEEJA_API_KEY
+# 2. run it
+make extract FILE=benchmarks/pep-0758/input/discourse_topic.json
+```
 
-From the committed real runs (`benchmarks/RESULTS.md`, 3 cases, 8 ground-truth items — small,
-indicative only):
+| You want to… | Run | Needs a model? |
+|---|---|:---:|
+| See what was decided and why | `beeja why-not "YAML config"` | ❌ |
+| Search all recovered decisions | `beeja search "shared buffer"` | ❌ |
+| Check a code change against history | `git diff \| beeja check-diff -` | ❌ |
+| Browse dossiers with highlighted proof | `make viewer` | ❌ |
+| Give a coding agent access | `beeja-mcp --store decisions` | ❌ |
+| Score against the withheld PEP answers | `make benchmark` | ❌ |
+| Extract decisions from a new thread | `beeja extract -i thread.json -o out.json` | ✅ |
+
+---
+
+## 🧭 The problem
+
+```mermaid
+flowchart LR
+    A["🗨️ 60-post PEP thread"] --> B{"What happened to idea X?"}
+    B -->|search| C["finds messages,<br/>not decisions"]
+    B -->|LLM summary| D["flattens alternatives,<br/>no proof, may invent"]
+    B -->|beeja| E["✔ every alternative<br/>✔ its outcome<br/>✔ the exact quote + link"]
+    style E fill:#e3f6ea,stroke:#1f9d55,color:#14532d
+    style C fill:#fde7e7,stroke:#d63939,color:#7f1d1d
+    style D fill:#fde7e7,stroke:#d63939,color:#7f1d1d
+```
+
+* **Search finds messages, not decisions.** The outcome of "should we do X?" is spread over a
+  proposal, a dozen objections and one sentence from the author forty posts later.
+* **Summaries flatten alternatives** and quietly turn "nobody answered the objection" into
+  "rejected". Beeja keeps every alternative separate and treats silence as `unresolved`.
+* **An LLM answer has no proof.** Every Beeja outcome points to a passage that was found
+  verbatim in the cited message *and* checked to actually say that.
+
+---
+
+## 🏗️ How it works
+
+```mermaid
+flowchart TD
+    IN["📥 Discussion<br/>Discourse JSON · GitHub comments · .txt/.md"] --> ING["Ingest<br/>keep IDs, authors, dates, reply links"]
+    ING --> CH["Chunk on message boundaries"]
+    CH --> LLM["🤖 Model extraction per chunk<br/>alternatives · outcome claims · for/against + quotes"]
+    LLM --> CL["Cluster repeated mentions"]
+    CL --> OUT["🤖 Reply-tree outcome pass<br/>(only alternatives still open)"]
+    OUT --> EV["🔍 Evidence check — deterministic<br/>quote found verbatim in the cited message?"]
+    EV --> ST["⚖️ Status resolution — deterministic<br/>only verified claims count · silence ≠ rejection"]
+    ST --> SUP["🤖 Support check<br/>does the passage really say that?<br/>can only withhold, never upgrade"]
+    SUP --> REC[("decisions/*.json<br/>one validated record per decision")]
+    REC --> CLI["💻 CLI<br/>search · get · why-not"]
+    REC --> DIFF["🧭 check-diff<br/>PR advisories"]
+    REC --> WEB["🌐 Web dossier"]
+    REC --> MCP["🔌 MCP server"]
+    REC --> BEN["📊 Benchmark"]
+    classDef model fill:#ede9fe,stroke:#7c3aed,color:#3b0764
+    classDef det fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e
+    class LLM,OUT,SUP model
+    class EV,ST det
+```
+
+🟣 purple steps call the model · 🔵 blue steps are deterministic code. Everything below the
+record is offline and model-free, and all interfaces share the same functions.
+
+### What an alternative's status means
+
+```mermaid
+stateDiagram-v2
+    direction LR
+    [*] --> proposed: mentioned
+    proposed --> unresolved: argued about, no decision
+    proposed --> accepted: adopted ✔
+    proposed --> rejected: decided against ✕
+    proposed --> withdrawn: proposer took it back ↩
+    proposed --> deferred: postponed ⏸
+    accepted --> superseded: replaced later ⇢
+    unresolved --> rejected: only with a verified, supported quote
+```
+
+A status other than `proposed` / `unresolved` is only recorded when its quote was found
+verbatim **and** the support check agrees. Otherwise the record keeps the claim as a note and
+says `unresolved`.
+
+### Every piece of evidence answers three separate questions
+
+| question | field | values |
+|---|---|---|
+| Does the cited message exist? | `verification` | `missing_message` |
+| Is the passage really in it? | `verification` | `exact` · `approximate` · `not_found` |
+| Does it support the claim? | `support` | `supports` · `weak` · `does_not_support` |
+
+---
+
+## 📊 Results at a glance
+
+From the committed real `qwen3:4b` runs (`benchmarks/RESULTS.md`; 3 cases, 8 ground-truth items
+taken from the final PEPs, which the model never sees — small, indicative only):
 
 | metric | value |
 |---|---|
-| rejected/deferred/withdrawn ideas recovered | 6 / 8 (recall 0.75; 0.857 on ideas actually raised in the threads; F1 0.789) |
-| precision of negative claims | 0.833 (1 unmatched: PEP 758 "backport to 3.12/3.13", a real idea the PEP doesn't list) |
-| correct reasons recovered, all backed by verified quotes | 4 |
-| quotes found verbatim in the cited message | 86% (the rest are flagged, never used as proof) |
-| open questions correctly *not* reported as decided (synthetic) | 3 / 3 |
+| 🎯 rejected / deferred / withdrawn ideas recovered | **6 / 8** · recall 0.75 (0.857 on ideas actually raised in the threads) · F1 0.789 |
+| ✅ precision of negative claims | **0.833** (1 unmatched: PEP 758 "backport to 3.12/3.13", a real idea the PEP doesn't list) |
+| 🧾 correct reasons recovered | **4**, all backed by verified quotes |
+| 🔍 quotes found verbatim in the cited message | **86%** (the rest are flagged and never used as proof) |
+| 🚦 open questions correctly *not* reported as decided | **3 / 3** |
 
-## Quick start
+---
 
-```bash
-make setup      # venv + pip install -e ".[dev]" + npm ci for the viewer
-make demo       # offline: why-not, diff advisories, benchmark on the committed real outputs
-make viewer     # decision dossier at http://localhost:5173
-make test       # lint + pytest + viewer build/tests (what CI runs)
+## ⚙️ Configure the model: `.env`
+
+Everything about the model lives in **one file**. `make setup` copies
+[`.env.example`](.env.example) to `.env`; open it and fill in four values:
+
+```dotenv
+BEEJA_PROVIDER=ollama              # ollama · ollama-cloud · openai-compatible · replay · (beeja providers)
+BEEJA_MODEL=qwen3:4b               # model name as the provider expects it
+BEEJA_BASE_URL=                    # empty = provider default, e.g. http://10.0.0.5:8000/v1
+BEEJA_API_KEY=                     # only if the server needs one
 ```
 
-Manual install: Python 3.11+, `python3 -m venv .venv && source .venv/bin/activate && pip install -e ".[dev]"`.
-Search, `get`, `why-not`, `check-diff`, the benchmark, the viewer and the MCP server need **no
-model**; only `beeja extract` calls one.
-
-## Model runtime
-
-The declared and tested model is **Qwen3 4B (`qwen3:4b`) on a local [Ollama](https://ollama.com)
-server** (see `HACKATHON.md`). Every committed example was produced by it.
-
-```bash
-ollama pull qwen3:4b && ollama serve
-beeja extract -i benchmarks/synthetic-config-format/input/discussion.txt -o out/demo.json
+```mermaid
+flowchart LR
+    ENV[".env"] --> P{"BEEJA_PROVIDER"}
+    P -->|ollama| L["🖥️ local Ollama<br/>http://localhost:11434"]
+    P -->|ollama + host| O["🏫 organiser's Ollama server"]
+    P -->|openai-compatible| V["⚙️ vLLM · llama.cpp · LM Studio · LiteLLM"]
+    P -->|ollama-cloud| C["☁️ Ollama Cloud"]
+    P -->|replay| R["📼 recorded real run<br/>(no model)"]
 ```
 
-On an 8 GB laptop the default 8k context can cause swapping; use a smaller context and chunks:
-`BEEJA_NUM_CTX=4096 beeja extract --chunk-chars 4000 ...`.
+The file documents every setting (context size, timeouts, schema-in-prompt, replay). Real
+environment variables override it, and `.env` is git-ignored, so keys never get committed.
+`beeja providers` lists every built-in preset with its default model.
 
-### Any provider: just add an API key
+> **Hackathon rules.** The project declares **qwen3:4b on a local Ollama server**
+> (`HACKATHON.md`), and every committed example was produced by it. The guidelines allow
+> open-weight models "on your laptop or on our model server"; closed-model APIs score 0.
+> If you switch models for the submission, update `HACKATHON.md` and re-run `examples/`.
+
+<details>
+<summary><b>Every provider preset and variable</b></summary>
+
+
 
 No key means local Ollama. Put **any** provider's key in `BEEJA_API_KEY` (in your shell or a `.env`
 file in the working directory) and Beeja detects the provider from the key prefix and uses that
@@ -138,6 +230,19 @@ same quote verification and support check, whichever model produced it.
 | `BEEJA_SCHEMA_IN_PROMPT` | `auto` | on for `*-cloud` models, non-local hosts and `openai` |
 | `BEEJA_NUM_CTX` | `8192` | context window requested from Ollama |
 | `BEEJA_TIMEOUT` | `600` | seconds per model call |
+
+</details>
+
+---
+
+## 🎨 Terminal output
+
+Every human-facing command prints a spaced, colour-coded view: status icons (✔ accepted,
+✕ rejected, ↩ withdrawn, ⏸ deferred, ? unresolved), quotes in a side bar with author and link,
+and score bars for the benchmark. Colour turns off automatically when output is piped;
+`NO_COLOR=1` disables it, `FORCE_COLOR=1` forces it. `--json` gives machine-readable output
+everywhere, and `check-diff --plain` / `benchmark --plain` give the stable plain-text formats used
+for committed files.
 
 ## Use
 

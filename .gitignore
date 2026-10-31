@@ -28,3 +28,4 @@ web/dist/
 # scratch output
 /out/
 /tmp/
+!.env.example

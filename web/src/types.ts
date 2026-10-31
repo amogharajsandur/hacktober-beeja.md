@@ -86,4 +86,8 @@ export interface IndexEntry {
   summary: string;
   alternatives: number;
   case: string;
+  counts?: Record<string, number>;
+  evidence_total?: number;
+  evidence_verified?: number;
+  source?: string | null;
 }

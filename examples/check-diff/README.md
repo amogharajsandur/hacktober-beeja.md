@@ -14,7 +14,7 @@ Regenerate:
 
 ```bash
 for p in examples/check-diff/*.patch; do
-  beeja check-diff "$p" --store decisions > "${p%.patch}.advisory.txt"
+  beeja check-diff "$p" --store decisions --plain > "${p%.patch}.advisory.txt"
   beeja check-diff "$p" --store decisions --json > "${p%.patch}.advisory.json"
 done
 ```

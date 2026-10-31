@@ -116,7 +116,12 @@ def export_web(examples: Path, out: Path) -> list[str]:
                    "messages": messages, "narrative_generated": rec.presentation is None}
         (out / f"{rec.id}.json").write_text(json.dumps(payload, indent=1, sort_keys=True, ensure_ascii=False) + "\n")
         written.append(rec.id)
+        statuses = [a.status for a in rec.alternatives]
         index.append({"id": rec.id, "question": rec.question, "topic": rec.topic, "status": rec.status,
-                      "summary": rec.summary, "alternatives": len(rec.alternatives), "case": case.name})
+                      "summary": rec.summary, "alternatives": len(rec.alternatives), "case": case.name,
+                      "counts": {s: statuses.count(s) for s in sorted(set(statuses))},
+                      "evidence_total": len(rec.evidence),
+                      "evidence_verified": sum(1 for e in rec.evidence if is_verified(e)),
+                      "source": next((t for t in rec.source_threads if t.startswith("http")), None)})
     (out / "index.json").write_text(json.dumps(index, indent=1, sort_keys=True, ensure_ascii=False) + "\n")
     return written
