@@ -1,0 +1,10 @@
+{"id": 999, "slug": "small-topic", "title": "Small topic", "posts_count": 3, "created_at": "2024-01-01T00:00:00Z",
+ "_beeja_base_url": "https://discuss.example.org",
+ "post_stream": {"stream": [1, 2, 3], "posts": [
+  {"id": 1, "post_number": 1, "username": "author1", "name": "Author One", "admin": true, "created_at": "2024-01-01T00:00:00Z",
+   "cooked": "<p>Proposal: make <code>foo</code> optional.</p><pre><code>x = foo()\n</code></pre>", "reply_to_post_number": null},
+  {"id": 2, "post_number": 2, "username": "critic", "name": "", "created_at": "2024-01-02T00:00:00Z",
+   "cooked": "<aside class=\"quote\" data-username=\"author1\"><div class=\"title\">author1:</div><blockquote><p>make foo optional</p></blockquote></aside><p>That would break &amp; confuse users.</p>", "reply_to_post_number": 1},
+  {"id": 3, "post_number": 3, "username": "author1", "name": "Author One", "created_at": "2024-01-03T00:00:00Z",
+   "cooked": "<p>OK, we decided to drop it.</p>", "reply_to_post_number": 2}
+ ]}}
