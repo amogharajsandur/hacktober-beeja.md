@@ -412,7 +412,62 @@
       "title": "Switch to writing a file to be executed in the buffer instead of code"
     }
   ],
-  "code_anchors": [],
+  "code_anchors": [
+    {
+      "kind": "symbol",
+      "note": "mentioned in post-3, post-4, post-10, post-28, post-29",
+      "repository": null,
+      "value": "PyRuntime"
+    },
+    {
+      "kind": "symbol",
+      "note": "mentioned in post-13, post-14",
+      "repository": null,
+      "value": "_PyRuntime"
+    },
+    {
+      "kind": "symbol",
+      "note": "mentioned in post-26, post-58",
+      "repository": null,
+      "value": "_PyRemoteDebuggerSupport"
+    },
+    {
+      "kind": "symbol",
+      "note": "mentioned in post-3",
+      "repository": null,
+      "value": "PyInterpreterState"
+    },
+    {
+      "kind": "symbol",
+      "note": "mentioned in post-3",
+      "repository": null,
+      "value": "PyThreadState"
+    },
+    {
+      "kind": "symbol",
+      "note": "mentioned in post-18",
+      "repository": null,
+      "value": "PyGILState_Ensure"
+    },
+    {
+      "kind": "symbol",
+      "note": "mentioned in post-18",
+      "repository": null,
+      "value": "PyGILState_Release"
+    },
+    {
+      "kind": "symbol",
+      "note": "mentioned in post-18",
+      "repository": null,
+      "value": "PyRun_SimpleString"
+    },
+    {
+      "kind": "symbol",
+      "note": "mentioned in post-49",
+      "repository": null,
+      "value": "_PyThreadStateImpl"
+    }
+  ],
   "confidence": "medium",
   "decided_at": null,
   "decision_authority": null,

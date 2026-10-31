@@ -1,0 +1,96 @@
+{
+  "advisories": [
+    {
+      "alternatives": [
+        {
+          "alternative_id": "alt-8",
+          "confidence": "high",
+          "evidence": [
+            {
+              "author": "Pablo Galindo Salgado",
+              "evidence_id": "ev-addf72fc6a",
+              "message_id": "post-54",
+              "quote": "We have switched back to write a file to be executed in the buffer instead of the code itself. We have made this decision to address the in-process security scenarios, ensuring that an attacker with arbitrary memory write capabilities canno",
+              "source_url": "https://discuss.python.org/t/pep-768-safe-external-debugger-interface-for-cpython/73969/54"
+            },
+            {
+              "author": "Gregory P. Smith",
+              "evidence_id": "ev-71929aeb87",
+              "message_id": "post-57",
+              "quote": "Ths Python Steering Council has reviewed PEP 768 - Safe external debugger interface and decided to Accept it!",
+              "source_url": "https://discuss.python.org/t/pep-768-safe-external-debugger-interface-for-cpython/73969/57"
+            }
+          ],
+          "reason": "Writing a file to be executed in the buffer prevents arbitrary code execution escalation",
+          "status": "accepted",
+          "title": "Switch to writing a file to be executed in the buffer instead of code",
+          "touched_by_change": [
+            "buffer"
+          ]
+        },
+        {
+          "alternative_id": "alt-4",
+          "confidence": "high",
+          "evidence": [
+            {
+              "author": "Pablo Galindo Salgado",
+              "evidence_id": "ev-be07e847ec",
+              "message_id": "post-6",
+              "quote": "Yeah this is an excellent point. I will actually think I want to include it in the PEP",
+              "source_url": "https://discuss.python.org/t/pep-768-safe-external-debugger-interface-for-cpython/73969/6"
+            },
+            {
+              "author": "Gregory P. Smith",
+              "evidence_id": "ev-71929aeb87",
+              "message_id": "post-57",
+              "quote": "Ths Python Steering Council has reviewed PEP 768 - Safe external debugger interface and decided to Accept it!",
+              "source_url": "https://discuss.python.org/t/pep-768-safe-external-debugger-interface-for-cpython/73969/57"
+            }
+          ],
+          "reason": "This would provide security by raising an audit event before executing arbitrary code",
+          "status": "accepted",
+          "title": "Raise audit event before executing arbitrary code",
+          "touched_by_change": []
+        }
+      ],
+      "decision_id": "dec-73969-pep-768-safe-external-debugger-interface-for-cpy",
+      "matched_because": [
+        {
+          "anchor": "_PyRuntime",
+          "file": "Include/cpython/pystate.h",
+          "source": "mentioned in post-13, post-14",
+          "type": "symbol"
+        },
+        {
+          "anchor": "_PyRemoteDebuggerSupport",
+          "file": "Include/cpython/pystate.h",
+          "source": "mentioned in post-26, post-58",
+          "type": "symbol"
+        },
+        {
+          "anchor": "PyThreadState",
+          "file": "Include/internal/pycore_runtime.h",
+          "source": "mentioned in post-3",
+          "type": "symbol"
+        },
+        {
+          "anchor": "buffer, debugger, per, support, thread",
+          "file": "*",
+          "source": "topic words",
+          "type": "keywords"
+        }
+      ],
+      "question": "How to implement a safe external debugger interface for CPython that allows debuggers to attach to live processes without stopping or restarting them?",
+      "score": 8.5,
+      "source_threads": [
+        "https://discuss.python.org/t/pep-768-safe-external-debugger-interface-for-cpython/73969"
+      ],
+      "status": "partially_decided"
+    }
+  ],
+  "files_changed": [
+    "Include/cpython/pystate.h",
+    "Include/internal/pycore_runtime.h"
+  ],
+  "note": "Informational historical context only. Beeja does not approve, block or comment on changes."
+}

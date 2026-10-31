@@ -1,0 +1,143 @@
+{
+  "advisories": [
+    {
+      "alternatives": [
+        {
+          "alternative_id": "alt-2",
+          "confidence": "high",
+          "evidence": [
+            {
+              "author": "ines",
+              "evidence_id": "ev-2b2682b2ab",
+              "message_id": "q3",
+              "quote": "YAML worries me. Its implicit typing means a value like no silently becomes false, and we would need PyYAML as a new runtime dependency.",
+              "source_url": null
+            },
+            {
+              "author": "maya",
+              "evidence_id": "ev-eac651f366",
+              "message_id": "q13",
+              "quote": "YAML is rejected because of the implicit typing surprises and the extra dependency",
+              "source_url": null
+            }
+          ],
+          "reason": "YAML worries me. Its implicit typing means a value like no silently becomes false, and we would need PyYAML as a new runtime dependency",
+          "status": "rejected",
+          "title": "YAML file",
+          "touched_by_change": [
+            "yaml"
+          ]
+        },
+        {
+          "alternative_id": "alt-1",
+          "confidence": "high",
+          "evidence": [
+            {
+              "author": "raj",
+              "evidence_id": "ev-ada15722d9",
+              "message_id": "q10",
+              "quote": "TOML can be read with tomllib, which is in the standard library from Python 3.11, and pyproject.toml is where Python tools keep settings now.",
+              "source_url": null
+            },
+            {
+              "author": "maya",
+              "evidence_id": "ev-37b9dcf073",
+              "message_id": "q13",
+              "quote": "Decision: we will read a [tool.quillfmt] table from pyproject.toml using tomllib, with tomli on older Pythons. YAML is rejected because of the implicit typing surprises and the extra dependency. INI is rejected because it cannot express nes",
+              "source_url": null
+            }
+          ],
+          "reason": "TOML can be read with tomllib, which is in the standard library from Python 3.11, and pyproject.toml is where Python tools keep settings now",
+          "status": "accepted",
+          "title": "TOML inside pyproject.toml",
+          "touched_by_change": [
+            "pyproject.toml"
+          ]
+        },
+        {
+          "alternative_id": "alt-3",
+          "confidence": "high",
+          "evidence": [
+            {
+              "author": "ines",
+              "evidence_id": "ev-e333b80e2f",
+              "message_id": "q6",
+              "quote": "INI cannot express nested tables or lists cleanly. Our per-language overrides need nesting, so INI would force awkward dotted keys.",
+              "source_url": null
+            },
+            {
+              "author": "maya",
+              "evidence_id": "ev-2da84d0c77",
+              "message_id": "q13",
+              "quote": "INI is rejected because it cannot express nested overrides",
+              "source_url": null
+            }
+          ],
+          "reason": "INI cannot express nested tables or lists cleanly. Our per-language overrides need nesting, so INI would force awkward dotted keys",
+          "status": "rejected",
+          "title": "INI file",
+          "touched_by_change": []
+        },
+        {
+          "alternative_id": "alt-4",
+          "confidence": "medium",
+          "evidence": [
+            {
+              "author": "lee",
+              "evidence_id": "ev-24ddbd7c3a",
+              "message_id": "q9",
+              "quote": "You're right about CI. I withdraw the Python config file idea.",
+              "source_url": null
+            }
+          ],
+          "reason": null,
+          "status": "withdrawn",
+          "title": "Plain Python file",
+          "touched_by_change": []
+        },
+        {
+          "alternative_id": "alt-5",
+          "confidence": "medium",
+          "evidence": [
+            {
+              "author": "maya",
+              "evidence_id": "ev-8bf34c9421",
+              "message_id": "q15",
+              "quote": "Good idea, but let's postpone the standalone .quillfmt.toml file until after 1.0, because it needs its own file discovery rules.",
+              "source_url": null
+            }
+          ],
+          "reason": null,
+          "status": "deferred",
+          "title": "Standalone .quillfmt.toml file",
+          "touched_by_change": []
+        }
+      ],
+      "decision_id": "dec-discussion-quillfmt-which-configuration-file-format-should",
+      "matched_because": [
+        {
+          "anchor": "pyproject.toml",
+          "file": "src/quillfmt/config.py",
+          "source": "mentioned in q1, q10, q13",
+          "type": "reference"
+        },
+        {
+          "anchor": "pyproject.toml, yaml",
+          "file": "*",
+          "source": "topic words",
+          "type": "keywords"
+        }
+      ],
+      "question": "quillfmt: which configuration file format should we support?",
+      "score": 2.5,
+      "source_threads": [
+        "discussion"
+      ],
+      "status": "partially_decided"
+    }
+  ],
+  "files_changed": [
+    "src/quillfmt/config.py"
+  ],
+  "note": "Informational historical context only. Beeja does not approve, block or comment on changes."
+}

@@ -15,6 +15,7 @@ import re
 from dataclasses import dataclass, field
 from typing import Any
 
+from .anchors import find_anchors
 from .evidence import is_verified, make_evidence
 from .model_adapter import ModelProvider
 from .schema import (
@@ -390,6 +391,7 @@ def build_record(
         topic=d.title or "",
         alternatives=alternatives,
         evidence=sorted(evidence.values(), key=lambda e: (order.get(e.message_id, 1 << 30), e.evidence_id)),
+        code_anchors=find_anchors(d),
         source_threads=[d.source_url or d.thread_id],
         decided_at=None,
         metadata={

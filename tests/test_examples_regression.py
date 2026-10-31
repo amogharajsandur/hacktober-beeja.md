@@ -29,3 +29,25 @@ def test_example_replays_to_committed_output(case):
 
 def test_examples_exist():
     assert CASES, "examples/ must contain at least one real model run"
+
+
+def test_decision_store_matches_examples():
+    """decisions/ (the store the CLI, MCP and diff advisories read) is exactly the example outputs."""
+    store = {p.name: p.read_text() for p in (ROOT / "decisions").glob("*.json")}
+    expected = {}
+    for case in CASES:
+        rec = storage.load_file(case / "decision.json")[0]
+        expected[f"{rec.id}.json"] = (case / "decision.json").read_text()
+    assert store == expected
+
+
+@pytest.mark.parametrize("patch", sorted((ROOT / "examples" / "check-diff").glob("*.patch")), ids=lambda p: p.stem)
+def test_committed_advisories_are_current(patch):
+    from beeja.diff import check_diff, render_text
+
+    report = check_diff(storage.load_dir(ROOT / "decisions"), patch.read_text())
+    assert render_text(report) == patch.with_suffix(".advisory.txt").read_text()
+    if patch.stem.startswith("unrelated"):
+        assert report["advisories"] == []
+    else:
+        assert report["advisories"], f"{patch.name} should be linked to a stored decision"

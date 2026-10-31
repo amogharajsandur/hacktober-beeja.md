@@ -186,7 +186,20 @@
       "title": "Environment variables"
     }
   ],
-  "code_anchors": [],
+  "code_anchors": [
+    {
+      "kind": "path",
+      "note": "mentioned in q1, q10, q13",
+      "repository": null,
+      "value": "pyproject.toml"
+    },
+    {
+      "kind": "path",
+      "note": "mentioned in q7",
+      "repository": null,
+      "value": "quillfmt_config.py"
+    }
+  ],
   "confidence": "medium",
   "decided_at": null,
   "decision_authority": null,
