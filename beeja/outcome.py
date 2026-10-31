@@ -81,13 +81,18 @@ def related_messages(d: Discussion, seeds: set[str], title: str) -> list[SourceM
         if m.author_id and m.author_id == starter and i > first and len(key & _words(m.body)) >= 2:
             picked.add(m.message_id)
     msgs = sorted((by_id[i] for i in picked), key=lambda m: order[m.message_id])
-    out, total = [], 0
-    for m in msgs:
-        if total + len(m.body) > MAX_CHARS and out:
-            continue  # keep earlier context; later long messages are dropped, not truncated
-        out.append(m)
-        total += len(m.body)
-    return out
+    total = sum(len(m.body) for m in msgs)
+    if total <= MAX_CHARS:
+        return msgs
+    # Over budget: keep every message (the settling reply is often the last and longest) but trim
+    # each long body to its head and tail. Both parts are verbatim, so quotes still verify.
+    per = max(600, MAX_CHARS // len(msgs))
+    return [m if len(m.body) <= per else m.model_copy(update={"body": _trim(m.body, per)}) for m in msgs]
+
+
+def _trim(body: str, budget: int) -> str:
+    half = budget // 2
+    return body[:half].rstrip() + "\n[... middle of message omitted ...]\n" + body[-half:].lstrip()
 
 
 def _fmt(m: SourceMessage) -> str:

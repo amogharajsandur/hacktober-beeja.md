@@ -10,6 +10,9 @@ Changed files: Include/cpython/pystate.h, Include/internal/pycore_runtime.h
    [accepted] Switch to writing a file to be executed in the buffer instead of code (confidence high)  <- this change uses: buffer
        why: Writing a file to be executed in the buffer prevents arbitrary code execution escalation
        proof: "We have switched back to write a file to be executed in the buffer instead of the code itself. We have made this decision to address the in-process security sce" - Pablo Galindo Salgado https://discuss.python.org/t/pep-768-safe-external-debugger-interface-for-cpython/73969/54
+   [rejected] Use a global scratch space for all threads (confidence low)
+       why: Pablog Salgado explicitly states he prefers per-thread scratch pads rather than a global one
+       proof: "prefer to still allow one scratch pad per thread because I think the cost makes sense (and we can make it much smaller than 4k if we need) and also makes attach" - Pablo Galindo Salgado https://discuss.python.org/t/pep-768-safe-external-debugger-interface-for-cpython/73969/10
    [accepted] Raise audit event before executing arbitrary code (confidence high)
        why: This would provide security by raising an audit event before executing arbitrary code
        proof: "Yeah this is an excellent point. I will actually think I want to include it in the PEP" - Pablo Galindo Salgado https://discuss.python.org/t/pep-768-safe-external-debugger-interface-for-cpython/73969/6

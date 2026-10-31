@@ -101,8 +101,8 @@ def verify_support(record: DecisionRecord, d: Discussion, provider: ModelProvide
         if a.status not in NEGATIVE and a.status != "accepted":
             continue
         for eid in a.status_evidence:
-            ev = evs[eid]
-            if not is_verified(ev):
+            ev = evs.get(eid)
+            if ev is None or not is_verified(ev):
                 continue
             out = provider.generate_json(
                 SUPPORT_SYSTEM, status_prompt(d, a.title, a.description, a.status, ev), STATUS_SCHEMA
@@ -128,8 +128,10 @@ def verify_support(record: DecisionRecord, d: Discussion, provider: ModelProvide
                     a.confidence = Confidence.low
         if a.status not in NEGATIVE:
             continue
-        for r in [r for r in a.reasons if r.supported][:MAX_REASONS_PER_ALTERNATIVE]:
-            ev = evs[r.evidence_ids[0]]
+        for r in [r for r in a.reasons if r.supported and r.evidence_ids][:MAX_REASONS_PER_ALTERNATIVE]:
+            ev = evs.get(r.evidence_ids[0])
+            if ev is None:
+                continue
             out = provider.generate_json(SUPPORT_SYSTEM, reason_prompt(d, a.title, a.status, r.text, ev), REASON_SCHEMA)
             checked += 1
             verdict = out.get("verdict", "does_not_support")

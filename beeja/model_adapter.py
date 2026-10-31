@@ -3,14 +3,23 @@
 ``generate_json(system, prompt, schema) -> dict`` returns a parsed JSON object or raises
 ``ModelError``. Providers:
 
-* ``OllamaProvider`` - real inference against a local (or organiser) Ollama server.
-* ``RecordingProvider`` - wraps a real provider and appends every exchange to a JSONL file.
+* ``OllamaProvider`` - an Ollama server: local (default), the organiser's server, or Ollama
+  Cloud (``*-cloud`` model tags through the local daemon, or ``https://ollama.com`` directly).
+* ``OpenAICompatibleProvider`` - any OpenAI-compatible ``/v1/chat/completions`` server serving an
+  open-weight model (vLLM, llama.cpp server, LM Studio, LiteLLM, an organiser endpoint ...).
+* ``RecordingProvider`` - wraps a live provider and records every exchange to a JSONL file.
 * ``ReplayProvider`` - replays a recording made from real inference; an unknown prompt is an
   error, never a silent fallback. CI uses this so runs are deterministic and offline.
 
-Configuration (environment): ``BEEJA_PROVIDER`` (``ollama`` | ``replay``), ``BEEJA_MODEL``
-(default ``qwen3:4b``), ``OLLAMA_HOST`` (default ``http://localhost:11434``),
-``BEEJA_REPLAY_FILE``, ``BEEJA_TIMEOUT`` seconds, ``BEEJA_NUM_CTX``.
+Local Ollama enforces the JSON schema with grammar-constrained decoding. Hosted endpoints often
+do not (Ollama Cloud ignores ``format``), so for those the schema is also stated in the prompt,
+replies are parsed leniently (code fences, ``<think>`` blocks, preamble) and one repair turn is
+attempted before failing.
+
+Configuration (environment): ``BEEJA_PROVIDER`` (``ollama`` | ``openai`` | ``replay``),
+``BEEJA_MODEL`` (default ``qwen3:4b``), ``BEEJA_BASE_URL`` / ``OLLAMA_HOST`` (server URL),
+``BEEJA_API_KEY`` (or ``OLLAMA_API_KEY``; only sent to non-local hosts), ``BEEJA_SCHEMA_IN_PROMPT``
+(``auto`` | ``1`` | ``0``), ``BEEJA_REPLAY_FILE``, ``BEEJA_TIMEOUT`` seconds, ``BEEJA_NUM_CTX``.
 """
 
 from __future__ import annotations
@@ -18,14 +27,17 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import time
 from pathlib import Path
 from typing import Any, Protocol
+from urllib.parse import urlsplit, urlunsplit
 
 import httpx
 
 DEFAULT_MODEL = "qwen3:4b"
 DEFAULT_HOST = "http://localhost:11434"
+_LOCAL_HOSTS = {"localhost", "127.0.0.1", "::1", "0.0.0.0"}
 
 
 class ModelError(Exception):
@@ -43,7 +55,90 @@ def exchange_key(model: str, system: str, prompt: str, schema: dict[str, Any]) -
     return hashlib.sha256(blob.encode("utf-8")).hexdigest()
 
 
-class OllamaProvider:
+_THINK = re.compile(r"<think>.*?</think>", re.S | re.I)
+_FENCE = re.compile(r"```(?:json|JSON)?\s*(.*?)```", re.S)
+
+
+def parse_json_loose(text: str) -> dict[str, Any]:
+    """Parse a JSON object from a model reply that may wrap it in fences, thinking or prose."""
+    text = _THINK.sub("", text or "").strip()
+    candidates = [m.group(1).strip() for m in _FENCE.finditer(text)] + [text]
+    dec = json.JSONDecoder()
+    for c in candidates:
+        try:
+            obj = json.loads(c)
+        except json.JSONDecodeError:
+            obj = None
+            for i, ch in enumerate(c):
+                if ch == "{":
+                    try:
+                        obj, _ = dec.raw_decode(c, i)
+                        break
+                    except json.JSONDecodeError:
+                        continue
+        if isinstance(obj, dict):
+            return obj
+    raise ValueError("reply contains no JSON object")
+
+
+def schema_instruction(schema: dict[str, Any]) -> str:
+    return ("Respond with ONLY one JSON object - no Markdown, no code fences, no explanation - "
+            "that validates against this JSON Schema:\n" + json.dumps(schema, separators=(",", ":")))
+
+
+def is_local(url: str) -> bool:
+    return (urlsplit(url).hostname or "") in _LOCAL_HOSTS
+
+
+class _ChatProvider:
+    """Shared retry / parse / repair loop. Subclasses implement ``_chat``."""
+
+    model: str
+    name: str
+    retries: int
+    schema_in_prompt: bool
+
+    def __init__(self) -> None:
+        self.calls: list[dict[str, Any]] = []
+
+    def _chat(self, messages: list[dict[str, str]], schema: dict[str, Any]) -> tuple[str, dict[str, Any]]:
+        raise NotImplementedError
+
+    def generate_json(self, system: str, prompt: str, schema: dict[str, Any]) -> dict[str, Any]:
+        user = prompt + ("\n\n" + schema_instruction(schema) if self.schema_in_prompt else "")
+        base = [{"role": "system", "content": system}, {"role": "user", "content": user}]
+        last: Exception | None = None
+        for attempt in range(self.retries + 1):
+            t0 = time.time()
+            try:
+                content, stats = self._chat(base, schema)
+                try:
+                    parsed = parse_json_loose(content)
+                except ValueError:
+                    # one repair turn: show the model its own reply and ask for the JSON only
+                    repair = base + [{"role": "assistant", "content": content[:6000]},
+                                     {"role": "user", "content": "That reply was not valid JSON. " + schema_instruction(schema)}]
+                    content, stats = self._chat(repair, schema)
+                    parsed = parse_json_loose(content)
+                self.calls.append({"seconds": round(time.time() - t0, 2), **stats})
+                return parsed
+            except httpx.HTTPStatusError as exc:
+                code = exc.response.status_code
+                detail = exc.response.text[:300].strip()
+                last = ModelError(f"HTTP {code} from {exc.request.url}: {detail}")
+                if code == 404 and "not found" in detail.lower():
+                    raise ModelError(f"{self.name}: model not found on the server ({detail}). "
+                                     f"For local Ollama run `ollama pull {self.model}`.") from exc
+                if code in (400, 401, 403, 404):
+                    raise last from exc  # not transient: retrying cannot help
+            except (httpx.HTTPError, ValueError, KeyError, IndexError, TypeError) as exc:
+                last = exc
+            if attempt < self.retries:
+                time.sleep(1.5 * (attempt + 1))
+        raise ModelError(f"{self.name} failed after {self.retries + 1} attempts: {last}")
+
+
+class OllamaProvider(_ChatProvider):
     def __init__(
         self,
         model: str = DEFAULT_MODEL,
@@ -53,51 +148,79 @@ class OllamaProvider:
         retries: int = 2,
         num_ctx: int = 8192,
         seed: int = 7,
+        api_key: str | None = None,
+        schema_in_prompt: bool | None = None,
         client: httpx.Client | None = None,
     ) -> None:
+        super().__init__()
         self.model = model
         self.name = f"ollama:{model}"
         self.host = host.rstrip("/")
-        self.timeout = timeout
         self.retries = retries
         self.num_ctx = num_ctx
         self.seed = seed
-        self._client = client or httpx.Client(timeout=timeout)
-        self.calls: list[dict[str, Any]] = []
+        hosted = model.endswith("-cloud") or not is_local(self.host)
+        self.schema_in_prompt = hosted if schema_in_prompt is None else schema_in_prompt
+        headers = {"Authorization": f"Bearer {api_key}"} if api_key and not is_local(self.host) else {}
+        self._client = client or httpx.Client(timeout=timeout, headers=headers)
 
-    def generate_json(self, system: str, prompt: str, schema: dict[str, Any]) -> dict[str, Any]:
+    def _chat(self, messages, schema):
         payload = {
             "model": self.model,
             "stream": False,
             "think": False,
             "format": schema,
             "options": {"temperature": 0, "seed": self.seed, "num_ctx": self.num_ctx},
-            "messages": [{"role": "system", "content": system}, {"role": "user", "content": prompt}],
+            "messages": messages,
         }
-        last: Exception | None = None
-        for attempt in range(self.retries + 1):
-            try:
-                t0 = time.time()
-                r = self._client.post(f"{self.host}/api/chat", json=payload)
-                r.raise_for_status()
-                data = r.json()
-                content = data["message"]["content"]
-                parsed = json.loads(content)
-                if not isinstance(parsed, dict):
-                    raise ModelError("model returned JSON that is not an object")
-                self.calls.append(
-                    {
-                        "seconds": round(time.time() - t0, 2),
-                        "prompt_tokens": data.get("prompt_eval_count"),
-                        "output_tokens": data.get("eval_count"),
-                    }
-                )
-                return parsed
-            except (httpx.HTTPError, json.JSONDecodeError, KeyError, ModelError) as exc:
-                last = exc
-                if attempt < self.retries:
-                    time.sleep(1.5 * (attempt + 1))
-        raise ModelError(f"{self.name} failed after {self.retries + 1} attempts: {last}")
+        r = self._client.post(f"{self.host}/api/chat", json=payload)
+        r.raise_for_status()
+        data = r.json()
+        return data["message"]["content"], {"prompt_tokens": data.get("prompt_eval_count"),
+                                            "output_tokens": data.get("eval_count")}
+
+
+class OpenAICompatibleProvider(_ChatProvider):
+    """``POST {base_url}/chat/completions``. Asks for ``json_schema`` output and falls back
+    to plain completion (schema in prompt + lenient parsing) if the server rejects it."""
+
+    def __init__(
+        self,
+        model: str,
+        base_url: str,
+        *,
+        api_key: str | None = None,
+        timeout: float = 600.0,
+        retries: int = 2,
+        seed: int = 7,
+        client: httpx.Client | None = None,
+    ) -> None:
+        super().__init__()
+        self.model = model
+        self.base_url = base_url.rstrip("/")
+        self.name = f"openai-compatible:{model}@{urlsplit(self.base_url).hostname}"
+        self.retries = retries
+        self.seed = seed
+        self.schema_in_prompt = True
+        self._structured = True
+        headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
+        self._client = client or httpx.Client(timeout=timeout, headers=headers)
+
+    def _chat(self, messages, schema):
+        payload: dict[str, Any] = {"model": self.model, "messages": messages, "temperature": 0, "seed": self.seed}
+        if self._structured:
+            payload["response_format"] = {"type": "json_schema",
+                                          "json_schema": {"name": "beeja", "schema": schema, "strict": False}}
+        r = self._client.post(f"{self.base_url}/chat/completions", json=payload)
+        if r.status_code in (400, 422) and self._structured:
+            self._structured = False  # server does not support structured output; prompt + parse instead
+            payload.pop("response_format")
+            r = self._client.post(f"{self.base_url}/chat/completions", json=payload)
+        r.raise_for_status()
+        data = r.json()
+        usage = data.get("usage") or {}
+        return data["choices"][0]["message"]["content"] or "", {
+            "prompt_tokens": usage.get("prompt_tokens"), "output_tokens": usage.get("completion_tokens")}
 
 
 class RecordingProvider:
@@ -109,7 +232,7 @@ class RecordingProvider:
     file with exactly the exchanges used by the latest run, in call order.
     """
 
-    def __init__(self, inner: OllamaProvider, path: Path) -> None:
+    def __init__(self, inner: Any, path: Path) -> None:
         self.inner = inner
         self.name = inner.name
         self.path = Path(path)
@@ -168,6 +291,11 @@ class ReplayProvider:
         return self._db[key]
 
 
+def _schema_flag() -> bool | None:
+    v = os.environ.get("BEEJA_SCHEMA_IN_PROMPT", "auto").strip().lower()
+    return None if v in ("", "auto") else v in ("1", "true", "yes")
+
+
 def provider_from_env(record_to: Path | None = None, replay_from: Path | None = None) -> ModelProvider:
     kind = os.environ.get("BEEJA_PROVIDER", "ollama").lower()
     model = os.environ.get("BEEJA_MODEL", DEFAULT_MODEL)
@@ -176,21 +304,35 @@ def provider_from_env(record_to: Path | None = None, replay_from: Path | None = 
         if replay is None:
             raise ModelError("BEEJA_PROVIDER=replay requires --replay or BEEJA_REPLAY_FILE")
         return ReplayProvider(replay, model=model)
-    if kind != "ollama":
-        raise ModelError(f"unknown BEEJA_PROVIDER {kind!r}")
-    p = OllamaProvider(
-        model=model,
-        host=_host(os.environ.get("OLLAMA_HOST", DEFAULT_HOST)),
-        timeout=float(os.environ.get("BEEJA_TIMEOUT", "600")),
-        num_ctx=int(os.environ.get("BEEJA_NUM_CTX", "8192")),
-    )
+    timeout = float(os.environ.get("BEEJA_TIMEOUT", "600"))
+    key = os.environ.get("BEEJA_API_KEY") or None
+    if kind == "ollama":
+        p: Any = OllamaProvider(
+            model=model,
+            host=_host(os.environ.get("BEEJA_BASE_URL") or os.environ.get("OLLAMA_HOST") or DEFAULT_HOST),
+            timeout=timeout,
+            num_ctx=int(os.environ.get("BEEJA_NUM_CTX", "8192")),
+            api_key=key or os.environ.get("OLLAMA_API_KEY") or None,
+            schema_in_prompt=_schema_flag(),
+        )
+    elif kind == "openai":
+        base = os.environ.get("BEEJA_BASE_URL")
+        if not base:
+            raise ModelError("BEEJA_PROVIDER=openai requires BEEJA_BASE_URL (e.g. http://server:8000/v1)")
+        p = OpenAICompatibleProvider(model=model, base_url=base, api_key=key, timeout=timeout)
+    else:
+        raise ModelError(f"unknown BEEJA_PROVIDER {kind!r} (use ollama, openai or replay)")
     return RecordingProvider(p, record_to) if record_to else p
 
 
 def _host(value: str) -> str:
+    """Normalise an Ollama host. Like Ollama's OLLAMA_HOST: a bare host means port 11434."""
     value = value.strip() or DEFAULT_HOST
-    if "://" not in value:
-        value = "http://" + value
-    if value.count(":") == 1:  # no port given
-        value += ":11434"
-    return value.replace("0.0.0.0", "localhost")
+    bare = "://" not in value
+    parts = urlsplit(("http://" + value) if bare else value)
+    host = parts.hostname or "localhost"
+    if host == "0.0.0.0":
+        host = "localhost"
+    port = parts.port or (11434 if bare or host in _LOCAL_HOSTS else None)
+    netloc = (f"[{host}]" if ":" in host else host) + (f":{port}" if port else "")
+    return urlunsplit((parts.scheme, netloc, parts.path.rstrip("/"), "", ""))

@@ -14,7 +14,7 @@
   "id": "dec-73969-pep-768-safe-external-debugger-interface-for-cpy",
   "question": "How to implement a safe external debugger interface for CPython that allows debuggers to attach to live processes without stopping or restarting them?",
   "status": "partially_decided",
-  "summary": "8 alternatives recovered from 59 messages: 2 accepted, 6 unresolved.",
+  "summary": "8 alternatives recovered from 59 messages: 2 accepted, 1 rejected, 5 unresolved.",
   "topic": "PEP 768 – Safe external debugger interface for CPython"
  },
  {
