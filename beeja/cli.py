@@ -61,7 +61,8 @@ def cmd_extract(args: argparse.Namespace) -> int:
     progress(f"{len(discussion.messages)} messages from {args.input}; model {provider.name}")
     try:
         record = extract(
-            discussion, provider, max_chars=args.chunk_chars, support_check=not args.no_support_check, progress=progress
+            discussion, provider, max_chars=args.chunk_chars, support_check=not args.no_support_check,
+            outcome_pass=not args.no_outcome_pass, progress=progress
         )
     except ModelError as exc:
         print(f"error: model failure: {exc}", file=sys.stderr)
@@ -268,6 +269,7 @@ def build_parser() -> argparse.ArgumentParser:
     e.add_argument("--record", help="append raw model exchanges to this JSONL file")
     e.add_argument("--replay", help="replay model exchanges from this JSONL file (no live model)")
     e.add_argument("--chunk-chars", type=int, default=7000, help="max characters per model chunk")
+    e.add_argument("--no-outcome-pass", action="store_true", help="skip the reply-tree outcome pass")
     e.add_argument("--no-support-check", action="store_true", help="skip the second model pass that checks support")
     e.add_argument("--json", action="store_true", help="print the record to stdout even with --output")
     e.add_argument("--quiet", "-q", action="store_true")

@@ -139,7 +139,9 @@
       "confidence": "uncertain",
       "description": "Using JSON format",
       "mentions": [],
-      "notes": [],
+      "notes": [
+        "ignored 1 status claim(s) whose quote could not be verified"
+      ],
       "opposing_evidence": [
         "ev-efaf056462"
       ],
@@ -176,7 +178,7 @@
       "proponents": [],
       "reasons": [],
       "rejection_type": null,
-      "status": "proposed",
+      "status": "unresolved",
       "status_evidence": [],
       "status_support": "unchecked",
       "supporting_evidence": [
@@ -483,18 +485,33 @@
       "start_offset": null,
       "support": "unchecked",
       "verification": "not_found"
+    },
+    {
+      "archive_url": null,
+      "author": null,
+      "created_at": null,
+      "end_offset": null,
+      "evidence_id": "ev-e475f2077c",
+      "message_id": "unresolved",
+      "quote": "\"unresolved\"",
+      "source_hash": null,
+      "source_url": null,
+      "start_offset": null,
+      "support": "unchecked",
+      "verification": "missing_message"
     }
   ],
   "id": "dec-discussion-quillfmt-which-configuration-file-format-should",
   "metadata": {
     "ai_extracted": true,
     "chunks": 1,
-    "evidence_total": 20,
+    "evidence_total": 21,
     "evidence_verified": 18,
-    "extractor": "extract-v2+support-v2",
+    "extractor": "extract-v2+outcome-v1+support-v2",
     "human_reviewed": false,
     "messages": 20,
     "model": "ollama:qwen3:4b",
+    "outcome_pass_calls": 2,
     "support_checks": 7
   },
   "presentation": null,
@@ -505,7 +522,7 @@
     "discussion"
   ],
   "status": "partially_decided",
-  "summary": "7 alternatives recovered from 20 messages: 1 proposed, 1 accepted, 2 rejected, 1 withdrawn, 1 deferred, 1 unresolved.",
+  "summary": "7 alternatives recovered from 20 messages: 1 accepted, 2 rejected, 1 withdrawn, 1 deferred, 2 unresolved.",
   "superseded_by": [],
   "supersedes": [],
   "topic": "quillfmt: which configuration file format should we support?",

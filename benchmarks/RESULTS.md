@@ -13,7 +13,7 @@
 | negative claims matching no ground truth | 1 |
 | correct rejection reasons recovered | 3 |
 | ...of which backed by verified evidence | 3 |
-| evidence verification rate | 0.86 |
+| evidence verification rate | 0.854 |
 | accepted/open status checks passed | 3/3 |
 
 ## pep-0758
@@ -51,5 +51,5 @@ model: `ollama:qwen3:4b`, alternatives extracted: 7
 Status checks:
 - syn-a1: expected ['accepted'], found ['accepted'] -> ok
 - syn-u1: expected ['unresolved', 'proposed'], found ['unresolved'] -> ok
-- syn-u2: expected ['unresolved', 'proposed'], found ['proposed'] -> ok
+- syn-u2: expected ['unresolved', 'proposed'], found ['unresolved'] -> ok
 

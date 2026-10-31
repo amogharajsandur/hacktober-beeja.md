@@ -10,7 +10,7 @@ from beeja.schema import check_integrity
 
 def ex(d, provider, **kw):
     """Extraction without the support pass, so these tests isolate status resolution."""
-    return extract(d, provider, support_check=False, **kw)
+    return extract(d, provider, support_check=False, outcome_pass=False, **kw)
 
 
 def alt(title, status, smid="", squote="", args=(), same_as="", proposed_in=""):
@@ -172,7 +172,7 @@ def test_cli_extract_replay(tmp_path, tabs_discussion, monkeypatch, capsys):
     ex(tabs_discussion, RecordingProvider(FakeOllama(), rec))
     out = tmp_path / "out.json"
     code = main(["extract", "-i", str(FIXTURES / "tabs_vs_spaces.txt"), "-o", str(out), "--replay", str(rec), "-q",
-                 "--no-support-check"])
+                 "--no-support-check", "--no-outcome-pass"])
     assert code == 0
     assert main(["validate", str(out)]) == 0
     assert main(["extract", "-i", str(tmp_path / "missing.txt"), "--replay", str(rec)]) == 2
