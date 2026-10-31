@@ -1,0 +1,107 @@
+{
+  "case": "pep-0758",
+  "input": "input/discourse_topic.json",
+  "reference": "Final PEP 758 text, sections 'Rejected Ideas' and 'Deferred Ideas' (https://peps.python.org/pep-0758/). Used only for scoring; never given to the model.",
+  "discussion": "https://discuss.python.org/t/66453",
+  "items": [
+    {
+      "id": "758-r1",
+      "title": "Allow mixing parenthesized and unparenthesized exception types in one except clause",
+      "expected_status": [
+        "rejected"
+      ],
+      "match_all": [
+        [
+          "mix",
+          "combin",
+          "both style"
+        ],
+        [
+          "parenthes",
+          "paren"
+        ]
+      ],
+      "reason_any": [
+        "confus",
+        "distinct",
+        "clear"
+      ],
+      "in_discussion": false,
+      "note": "Listed in the final PEP but never raised in the discussion thread (checked by searching all 52 posts), so it cannot be recovered from the discussion alone."
+    },
+    {
+      "id": "758-d1",
+      "title": "Allow unparenthesized exception lists when the 'as' clause is used",
+      "expected_status": [
+        "deferred",
+        "rejected"
+      ],
+      "match_all": [
+        [
+          "as clause",
+          "as keyword",
+          "'as'",
+          "`as`",
+          "\"as\"",
+          "as e",
+          "as binding",
+          "with as",
+          "using as",
+          "when as",
+          "the as",
+          "as-clause",
+          "as target"
+        ]
+      ],
+      "complement": {
+        "match_all": [
+          [
+            "requir",
+            "keep",
+            "mandatory",
+            "always",
+            "only"
+          ],
+          [
+            "parenthes",
+            "paren"
+          ],
+          [
+            "as clause",
+            "as keyword",
+            "'as'",
+            "`as`",
+            "\"as\"",
+            "as e",
+            "as binding",
+            "with as",
+            "using as",
+            "when as",
+            "the as",
+            "as-clause",
+            "as target"
+          ]
+        ],
+        "status": [
+          "accepted"
+        ]
+      },
+      "reason_any": [
+        "consensus",
+        "removed later",
+        "can be removed",
+        "put back",
+        "either way",
+        "ambigu",
+        "bind",
+        "confus"
+      ],
+      "in_discussion": true,
+      "note": "Deferred in the final PEP. An accepted alternative 'always require parentheses with as' is the same decision stated from the other side and counts as recovering it."
+    }
+  ],
+  "leak_canaries": [
+    "potential for confusion and to maintain a clear distinction between the two styles",
+    "taking it out and users deciding it was a bad idea"
+  ]
+}

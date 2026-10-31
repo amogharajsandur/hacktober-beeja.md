@@ -60,10 +60,15 @@ def cmd_extract(args: argparse.Namespace) -> int:
 
     progress(f"{len(discussion.messages)} messages from {args.input}; model {provider.name}")
     try:
-        record = extract(discussion, provider, max_chars=args.chunk_chars, progress=progress)
+        record = extract(
+            discussion, provider, max_chars=args.chunk_chars, support_check=not args.no_support_check, progress=progress
+        )
     except ModelError as exc:
         print(f"error: model failure: {exc}", file=sys.stderr)
         return EXIT_MODEL
+    if hasattr(provider, "compact"):
+        provider.compact()
+        progress(f"recording: {provider.reused} exchanges reused, {len(provider.used) - provider.reused} new")
     text = storage.dumps(record)
     if args.output:
         Path(args.output).parent.mkdir(parents=True, exist_ok=True)
@@ -88,6 +93,27 @@ def cmd_fetch_discourse(args: argparse.Namespace) -> int:
     Path(args.output).write_text(json.dumps(topic, indent=1, sort_keys=True, ensure_ascii=False), encoding="utf-8")
     print(f"saved {len(topic['post_stream']['posts'])} posts to {args.output}", file=sys.stderr)
     return EXIT_OK
+
+
+def cmd_benchmark(args: argparse.Namespace) -> int:
+    from .benchmark import render_markdown, run
+
+    if not Path(args.dataset).is_dir():
+        print(f"error: dataset directory not found: {args.dataset}", file=sys.stderr)
+        return EXIT_USAGE
+    try:
+        report = run(Path(args.dataset), Path(args.outputs))
+    except storage.StorageError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return EXIT_INVALID
+    md = render_markdown(report)
+    if args.markdown:
+        Path(args.markdown).write_text(md, encoding="utf-8")
+    if args.json:
+        _print_json(report)
+    else:
+        sys.stdout.write(md)
+    return EXIT_OK if report["summary"] else EXIT_INVALID
 
 
 def cmd_schema(args: argparse.Namespace) -> int:
@@ -115,6 +141,7 @@ def build_parser() -> argparse.ArgumentParser:
     e.add_argument("--record", help="append raw model exchanges to this JSONL file")
     e.add_argument("--replay", help="replay model exchanges from this JSONL file (no live model)")
     e.add_argument("--chunk-chars", type=int, default=7000, help="max characters per model chunk")
+    e.add_argument("--no-support-check", action="store_true", help="skip the second model pass that checks support")
     e.add_argument("--json", action="store_true", help="print the record to stdout even with --output")
     e.add_argument("--quiet", "-q", action="store_true")
     e.set_defaults(func=cmd_extract)
@@ -124,6 +151,13 @@ def build_parser() -> argparse.ArgumentParser:
     f.add_argument("--base-url", default="https://discuss.python.org")
     f.add_argument("--output", "-o", required=True)
     f.set_defaults(func=cmd_fetch_discourse)
+
+    b = sub.add_parser("benchmark", help="score extracted decisions against withheld ground truth")
+    b.add_argument("--dataset", default="benchmarks", help="directory of cases with ground_truth.json")
+    b.add_argument("--outputs", default="examples", help="directory holding <case>/decision.json")
+    b.add_argument("--markdown", help="also write the Markdown report here")
+    b.add_argument("--json", action="store_true")
+    b.set_defaults(func=cmd_benchmark)
 
     s = sub.add_parser("schema", help="print the DecisionRecord JSON Schema")
     s.set_defaults(func=cmd_schema)

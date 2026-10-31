@@ -8,6 +8,11 @@ from beeja.model_adapter import RecordingProvider, ReplayProvider, exchange_key
 from beeja.schema import check_integrity
 
 
+def ex(d, provider, **kw):
+    """Extraction without the support pass, so these tests isolate status resolution."""
+    return extract(d, provider, support_check=False, **kw)
+
+
 def alt(title, status, smid="", squote="", args=(), same_as="", proposed_in=""):
     return {
         "title": title, "same_as": same_as, "description": title, "proposed_in": proposed_in,
@@ -32,7 +37,7 @@ TABS_RESPONSE = {
 
 
 def test_full_pipeline_statuses(tabs_discussion, scripted):
-    rec = extract(tabs_discussion, scripted([TABS_RESPONSE]))
+    rec = ex(tabs_discussion, scripted([TABS_RESPONSE]))
     by = {a.title: a for a in rec.alternatives}
     assert by["Indent with tabs"].status == "withdrawn"
     assert by["Two-space indentation"].status == "accepted"
@@ -52,7 +57,7 @@ def test_objection_without_decision_is_not_rejection(tabs_discussion, scripted):
         alt("Indent with tabs", "unresolved",
             args=[("against", "breaks yaml", "m2", "Tabs render inconsistently across editors")]),
     ]}
-    a = extract(tabs_discussion, scripted([resp])).alternatives[0]
+    a = ex(tabs_discussion, scripted([resp])).alternatives[0]
     assert a.status == "unresolved" and a.rejection_type is None
 
 
@@ -61,7 +66,7 @@ def test_model_claims_rejection_with_fabricated_quote(tabs_discussion, scripted)
         alt("Indent with tabs", "rejected", "m6", "Tabs are hereby rejected by the steering council forever",
             [("against", "breaks yaml", "m2", "Tabs render inconsistently across editors")]),
     ]}
-    rec = extract(tabs_discussion, scripted([resp]))
+    rec = ex(tabs_discussion, scripted([resp]))
     a = rec.alternatives[0]
     assert a.status == "unresolved"  # an unverifiable outcome is never accepted
     assert any("could not be verified" in n for n in a.notes)
@@ -70,7 +75,7 @@ def test_model_claims_rejection_with_fabricated_quote(tabs_discussion, scripted)
 
 def test_wrong_message_id_is_flagged(tabs_discussion, scripted):
     resp = {"question": "q", "alternatives": [alt("Indent with tabs", "withdrawn", "m99", "I withdraw the tabs idea")]}
-    rec = extract(tabs_discussion, scripted([resp]))
+    rec = ex(tabs_discussion, scripted([resp]))
     assert rec.alternatives[0].status == "proposed"
     assert rec.evidence[0].verification == "missing_message"
 
@@ -78,7 +83,7 @@ def test_wrong_message_id_is_flagged(tabs_discussion, scripted):
 def test_rejection_without_decision_wording_is_inferred(tabs_discussion, scripted):
     resp = {"question": "q", "alternatives": [
         alt("Indent with tabs", "rejected", "m2", "Tabs render inconsistently across editors")]}
-    a = extract(tabs_discussion, scripted([resp])).alternatives[0]
+    a = ex(tabs_discussion, scripted([resp])).alternatives[0]
     assert a.status == "rejected" and a.rejection_type == "inferred" and a.confidence == "low"
 
 
@@ -94,7 +99,7 @@ def test_chunking_and_cross_chunk_clustering(tabs_discussion, scripted):
     ]}
     rest = [{"question": "", "alternatives": []}] * (len(chunks) - 2)
     prov = scripted([first, later, *rest])
-    rec = extract(tabs_discussion, prov, max_chars=250)
+    rec = ex(tabs_discussion, prov, max_chars=250)
     assert [a.title for a in rec.alternatives] == ["Indent with tabs", "Two-space indentation"]
     assert rec.alternatives[0].status == "withdrawn"
     assert "alt-1: Indent with tabs" in prov.prompts[1]  # known alternatives passed forward
@@ -105,7 +110,7 @@ def test_latest_verified_claim_wins_by_message_position(tabs_discussion, scripte
         alt("Configurable --indent flag", "deferred", "m6", "deferred to a later release"),
         alt("Configurable --indent flag", "proposed", "m4", "make the indentation width configurable"),
     ]}
-    a = extract(tabs_discussion, scripted([resp])).alternatives
+    a = ex(tabs_discussion, scripted([resp])).alternatives
     assert len(a) == 1 and a[0].status == "deferred"
 
 
@@ -119,7 +124,7 @@ def test_prompt_marks_discussion_as_untrusted(tabs_discussion, scripted):
 
     assert "untrusted" in SYSTEM
     prov = scripted([{"question": "q", "alternatives": []}])
-    extract(tabs_discussion, prov)
+    ex(tabs_discussion, prov)
     assert "<<<" in prov.prompts[0] and ">>>" in prov.prompts[0]
 
 
@@ -133,8 +138,8 @@ def test_record_then_replay_is_identical(tmp_path, tabs_discussion, scripted):
             return TABS_RESPONSE
 
     path = tmp_path / "rec.jsonl"
-    live = extract(tabs_discussion, RecordingProvider(FakeOllama(), path))
-    replayed = extract(tabs_discussion, ReplayProvider(path, model="qwen3:4b"))
+    live = ex(tabs_discussion, RecordingProvider(FakeOllama(), path))
+    replayed = ex(tabs_discussion, ReplayProvider(path, model="qwen3:4b"))
     assert live.model_dump() | {"metadata": None} == replayed.model_dump() | {"metadata": None}
     line = json.loads(path.read_text().splitlines()[0])
     assert len(line["key"]) == 64 and line["model"] == "qwen3:4b"
@@ -149,7 +154,7 @@ def test_replay_unknown_prompt_errors(tmp_path, tabs_discussion):
     p = tmp_path / "empty.jsonl"
     p.write_text("")
     with pytest.raises(ModelError):
-        extract(tabs_discussion, ReplayProvider(p))
+        ex(tabs_discussion, ReplayProvider(p))
 
 
 def test_cli_extract_replay(tmp_path, tabs_discussion, monkeypatch, capsys):
@@ -164,9 +169,36 @@ def test_cli_extract_replay(tmp_path, tabs_discussion, monkeypatch, capsys):
     from tests.conftest import FIXTURES
 
     rec = tmp_path / "rec.jsonl"
-    extract(tabs_discussion, RecordingProvider(FakeOllama(), rec))
+    ex(tabs_discussion, RecordingProvider(FakeOllama(), rec))
     out = tmp_path / "out.json"
-    code = main(["extract", "-i", str(FIXTURES / "tabs_vs_spaces.txt"), "-o", str(out), "--replay", str(rec), "-q"])
+    code = main(["extract", "-i", str(FIXTURES / "tabs_vs_spaces.txt"), "-o", str(out), "--replay", str(rec), "-q",
+                 "--no-support-check"])
     assert code == 0
     assert main(["validate", str(out)]) == 0
     assert main(["extract", "-i", str(tmp_path / "missing.txt"), "--replay", str(rec)]) == 2
+
+
+def test_recording_reuses_identical_prompts_and_compacts(tmp_path, tabs_discussion):
+    class CountingOllama:
+        model = "qwen3:4b"
+        name = "ollama:qwen3:4b"
+        calls = []
+
+        def __init__(self):
+            self.n = 0
+
+        def generate_json(self, s, p, sc):
+            self.n += 1
+            return TABS_RESPONSE
+
+    path = tmp_path / "rec.jsonl"
+    path.write_text(json.dumps({"key": "stale", "model": "qwen3:4b", "response": {}}) + "\n")
+    first = CountingOllama()
+    rp = RecordingProvider(first, path)
+    ex(tabs_discussion, rp)
+    rp.compact()
+    assert first.n == 1 and "stale" not in path.read_text()
+    second = CountingOllama()
+    rp2 = RecordingProvider(second, path)
+    ex(tabs_discussion, rp2)
+    assert second.n == 0 and rp2.reused == 1  # identical prompt -> recorded real response reused
