@@ -277,19 +277,33 @@
     },
     {
       "alternative_id": "alt-5",
-      "confidence": "uncertain",
+      "confidence": "low",
       "description": "Alternative to use a single 4KB scratch space per process instead of per thread",
       "mentions": [],
       "notes": [
-        "ignored 1 status claim(s) whose quote could not be verified"
+        "ignored 1 status claim(s) whose quote could not be verified",
+        "support check: passage only weakly supports the outcome"
       ],
-      "opposing_evidence": [],
+      "opposing_evidence": [
+        "ev-726ff5a4a3"
+      ],
       "proponents": [],
-      "reasons": [],
-      "rejection_type": null,
-      "status": "unresolved",
-      "status_evidence": [],
-      "status_support": "unchecked",
+      "reasons": [
+        {
+          "evidence_ids": [
+            "ev-726ff5a4a3"
+          ],
+          "premise": null,
+          "supported": true,
+          "text": "Pablog Salgado explicitly states he prefers per-thread scratch pads rather than a global one"
+        }
+      ],
+      "rejection_type": "explicit",
+      "status": "rejected",
+      "status_evidence": [
+        "ev-726ff5a4a3"
+      ],
+      "status_support": "weak",
       "supporting_evidence": [
         "ev-3e6a8e104f",
         "ev-c820f30a49",
@@ -596,6 +610,20 @@
       "source_url": "https://discuss.python.org/t/pep-768-safe-external-debugger-interface-for-cpython/73969/8",
       "start_offset": 663,
       "support": "unchecked",
+      "verification": "exact"
+    },
+    {
+      "archive_url": null,
+      "author": "Pablo Galindo Salgado",
+      "created_at": "2024-12-11T17:21:38.855Z",
+      "end_offset": 1378,
+      "evidence_id": "ev-726ff5a4a3",
+      "message_id": "post-10",
+      "quote": "prefer to still allow one scratch pad per thread because I think the cost makes sense (and we can make it much smaller than 4k if we need) and also makes attaching easier because it needs less pointers to follow but if we think that is too costly I am happy with the scratchpad in PyRuntime instead.",
+      "source_hash": "sha256:8b14d5101a7597fcfd03952ea392aca06d7026a5c7ec9a287a9b09965328bf9a",
+      "source_url": "https://discuss.python.org/t/pep-768-safe-external-debugger-interface-for-cpython/73969/10",
+      "start_offset": 1080,
+      "support": "weak",
       "verification": "exact"
     },
     {
@@ -951,20 +979,6 @@
     {
       "archive_url": null,
       "author": "Mark Shannon",
-      "created_at": "2024-12-13T11:45:43.611Z",
-      "end_offset": 60,
-      "evidence_id": "ev-f1d26407a6",
-      "message_id": "post-40",
-      "quote": "\"Apparently the reference implementation is not to be trusted\"",
-      "source_hash": "sha256:4adb6784795141bcd39e106dede371f0b35ed085795a5b4ab53367bd0cc86f2b",
-      "source_url": "https://discuss.python.org/t/pep-768-safe-external-debugger-interface-for-cpython/73969/40",
-      "start_offset": 0,
-      "support": "unchecked",
-      "verification": "exact"
-    },
-    {
-      "archive_url": null,
-      "author": "Mark Shannon",
       "created_at": "2024-12-13T12:23:25.357Z",
       "end_offset": null,
       "evidence_id": "ev-140241d431",
@@ -989,6 +1003,20 @@
       "start_offset": null,
       "support": "unchecked",
       "verification": "not_found"
+    },
+    {
+      "archive_url": null,
+      "author": "Pablo Galindo Salgado",
+      "created_at": "2024-12-13T12:28:00.129Z",
+      "end_offset": 411,
+      "evidence_id": "ev-9075f1c8e3",
+      "message_id": "post-43",
+      "quote": "Makes sense! I want to explore this better. We will update the PEP with the details and I have asked @steve.dower for a call to discuss this a bit better in a real time environment",
+      "source_hash": "sha256:fc8473c18c7ebe78591d79447e25c6a3f8497016bfab1cfb5b0985e87461e28f",
+      "source_url": "https://discuss.python.org/t/pep-768-safe-external-debugger-interface-for-cpython/73969/43",
+      "start_offset": 231,
+      "support": "unchecked",
+      "verification": "exact"
     },
     {
       "archive_url": null,
@@ -1121,14 +1149,14 @@
   "metadata": {
     "ai_extracted": true,
     "chunks": 7,
-    "evidence_total": 46,
-    "evidence_verified": 42,
+    "evidence_total": 47,
+    "evidence_verified": 43,
     "extractor": "extract-v2+outcome-v1+support-v2",
     "human_reviewed": false,
     "messages": 59,
     "model": "ollama:qwen3:4b",
     "outcome_pass_calls": 3,
-    "support_checks": 5
+    "support_checks": 7
   },
   "presentation": null,
   "question": "How to implement a safe external debugger interface for CPython that allows debuggers to attach to live processes without stopping or restarting them?",
@@ -1138,7 +1166,7 @@
     "https://discuss.python.org/t/pep-768-safe-external-debugger-interface-for-cpython/73969"
   ],
   "status": "partially_decided",
-  "summary": "8 alternatives recovered from 59 messages: 2 accepted, 6 unresolved.",
+  "summary": "8 alternatives recovered from 59 messages: 2 accepted, 1 rejected, 5 unresolved.",
   "superseded_by": [],
   "supersedes": [],
   "topic": "PEP 768 – Safe external debugger interface for CPython",

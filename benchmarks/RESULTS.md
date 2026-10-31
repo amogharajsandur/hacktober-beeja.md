@@ -4,16 +4,16 @@
 |---|---|
 | cases | 3 |
 | ground-truth rejected/deferred items | 8 |
-| recovered | 5 |
-| missed | 3 |
-| recall | 0.625 |
-| recall (items actually raised in the discussion) | 0.714 |
-| precision | 0.8 |
-| F1 | 0.702 |
+| recovered | 6 |
+| missed | 2 |
+| recall | 0.75 |
+| recall (items actually raised in the discussion) | 0.857 |
+| precision | 0.833 |
+| F1 | 0.789 |
 | negative claims matching no ground truth | 1 |
-| correct rejection reasons recovered | 3 |
-| ...of which backed by verified evidence | 3 |
-| evidence verification rate | 0.854 |
+| correct rejection reasons recovered | 4 |
+| ...of which backed by verified evidence | 4 |
+| evidence verification rate | 0.856 |
 | accepted/open status checks passed | 3/3 |
 
 ## pep-0758
@@ -35,7 +35,7 @@ model: `ollama:qwen3:4b`, alternatives extracted: 8
 | item | in discussion | recovered | via | status | reason | reason verified |
 |---|---|---|---|---|---|---|
 | 768-r1: Debugger writes Python source code (instead of a path to a script file) into the remote buffer | yes | yes | complement | accepted | yes | yes |
-| 768-r2: Use a single shared runtime-level buffer for all debugger communication instead of per-thread buffers | yes | no | - | - | no | no |
+| 768-r2: Use a single shared runtime-level buffer for all debugger communication instead of per-thread buffers | yes | yes | direct | rejected | yes | yes |
 
 ## synthetic-config-format
 

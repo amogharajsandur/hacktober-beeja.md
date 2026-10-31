@@ -50,37 +50,65 @@ indicative only):
 
 | metric | value |
 |---|---|
-| rejected/deferred/withdrawn ideas recovered | 5 / 8 (recall 0.625; 0.714 on ideas actually raised in the threads) |
-| precision of negative claims | 0.8 (1 unmatched: PEP 758 "backport to 3.12/3.13", a real idea the PEP doesn't list) |
-| correct reasons recovered, all backed by verified quotes | 3 |
-| quotes found verbatim in the cited message | 85% (the rest are flagged, never used as proof) |
+| rejected/deferred/withdrawn ideas recovered | 6 / 8 (recall 0.75; 0.857 on ideas actually raised in the threads; F1 0.789) |
+| precision of negative claims | 0.833 (1 unmatched: PEP 758 "backport to 3.12/3.13", a real idea the PEP doesn't list) |
+| correct reasons recovered, all backed by verified quotes | 4 |
+| quotes found verbatim in the cited message | 86% (the rest are flagged, never used as proof) |
 | open questions correctly *not* reported as decided (synthetic) | 3 / 3 |
 
-## Install
-
-Requires Python 3.11+.
+## Quick start
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -e ".[dev]"
+make setup      # venv + pip install -e ".[dev]" + npm ci for the viewer
+make demo       # offline: why-not, diff advisories, benchmark on the committed real outputs
+make viewer     # decision dossier at http://localhost:5173
+make test       # lint + pytest + viewer build/tests (what CI runs)
 ```
+
+Manual install: Python 3.11+, `python3 -m venv .venv && source .venv/bin/activate && pip install -e ".[dev]"`.
+Search, `get`, `why-not`, `check-diff`, the benchmark, the viewer and the MCP server need **no
+model**; only `beeja extract` calls one.
 
 ## Model runtime
 
-Beeja uses **Qwen3 4B (`qwen3:4b`) through a local [Ollama](https://ollama.com) server**. No API
-keys and no hosted service are needed.
+The declared and tested model is **Qwen3 4B (`qwen3:4b`) on a local [Ollama](https://ollama.com)
+server** (see `HACKATHON.md`). Every committed example was produced by it.
 
 ```bash
-ollama pull qwen3:4b          # ~2.5 GB, fits an 8 GB laptop
-ollama serve                  # if it is not already running
+ollama pull qwen3:4b && ollama serve
+beeja extract -i benchmarks/synthetic-config-format/input/discussion.txt -o out/demo.json
 ```
+
+On an 8 GB laptop the default 8k context can cause swapping; use a smaller context and chunks:
+`BEEJA_NUM_CTX=4096 beeja extract --chunk-chars 4000 ...`.
+
+### Other endpoints (open-weight models only)
+
+| setup | how |
+|---|---|
+| Organiser / remote Ollama server | `OLLAMA_HOST=http://server:11434 BEEJA_MODEL=<tag> beeja extract ...` |
+| Any OpenAI-compatible server (vLLM, llama.cpp, LM Studio, LiteLLM) | `BEEJA_PROVIDER=openai BEEJA_BASE_URL=http://server:8000/v1 BEEJA_MODEL=<model> [BEEJA_API_KEY=...] beeja extract ...` |
+| Ollama Cloud through the local daemon | `ollama signin`, then `BEEJA_MODEL=gemma4:31b-cloud beeja extract ...` |
+| Ollama Cloud directly | `BEEJA_BASE_URL=https://ollama.com BEEJA_API_KEY=$OLLAMA_API_KEY BEEJA_MODEL=gemma4:31b beeja extract ...` |
+
+Hosted endpoints often ignore Ollama's JSON-schema `format` (Ollama Cloud answers in Markdown),
+so for them Beeja also states the schema in the prompt, parses replies leniently (code fences,
+`<think>` blocks, surrounding prose) and makes one repair attempt. Force this with
+`BEEJA_SCHEMA_IN_PROMPT=1`. API keys are read from the environment only, are sent only to
+non-local hosts, and must never be committed (`.env` is git-ignored).
+
+> **Hackathon rules:** the participant guidelines allow open-weight models "on your laptop or on
+> our model server", and closed-model APIs score 0. Ollama Cloud hosts open-weight models but is
+> a third-party service that is not explicitly approved. Get organiser approval before using
+> it for the submission, and update `HACKATHON.md` and `examples/` if the declared model changes.
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `BEEJA_MODEL` | `qwen3:4b` | Ollama model tag |
-| `OLLAMA_HOST` | `http://localhost:11434` | Ollama server (laptop or organiser server) |
-| `BEEJA_PROVIDER` | `ollama` | `ollama` for live inference, `replay` to replay a recording |
+| `BEEJA_PROVIDER` | `ollama` | `ollama`, `openai` (OpenAI-compatible server), or `replay` |
+| `BEEJA_MODEL` | `qwen3:4b` | model tag / name |
+| `BEEJA_BASE_URL` / `OLLAMA_HOST` | `http://localhost:11434` | server URL (a bare host means port 11434) |
+| `BEEJA_API_KEY` / `OLLAMA_API_KEY` | – | bearer token for remote servers |
+| `BEEJA_SCHEMA_IN_PROMPT` | `auto` | on for `*-cloud` models, non-local hosts and `openai` |
 | `BEEJA_NUM_CTX` | `8192` | context window requested from Ollama |
 | `BEEJA_TIMEOUT` | `600` | seconds per model call |
 

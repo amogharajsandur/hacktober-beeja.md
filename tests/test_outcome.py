@@ -60,3 +60,21 @@ def test_message_order_independent_of_hash_seed():
         for seed in range(8)
     }
     assert outs == {"['p2', 'p4']"}
+
+
+def test_long_settling_reply_is_trimmed_not_dropped():
+    from beeja.outcome import MAX_CHARS
+
+    long_end = "Background. " * 800 + "Final decision: we will keep per-thread buffers."
+    d = from_text(
+        "[p1] pablo (author): We propose a per-thread buffer for debugger scripts.\n"
+        "[p2] sam: Why not one global scratch buffer shared by all threads? " + "Details. " * 400 + "\n"
+        "[p4] pablo (author): " + long_end + "\n",
+        "t",
+    )
+    d.messages[2].reply_to = "p2"
+    msgs = related_messages(d, {"p2"}, "Single global scratch buffer")
+    assert [m.message_id for m in msgs] == ["p2", "p4"]
+    assert sum(len(m.body) for m in msgs) <= MAX_CHARS + 200
+    assert msgs[1].body.endswith("we will keep per-thread buffers.")  # the conclusion survives
+    assert d.message("p4").body == long_end  # the stored discussion is not modified

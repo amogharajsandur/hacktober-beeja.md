@@ -29,6 +29,30 @@
           ]
         },
         {
+          "alternative_id": "alt-5",
+          "confidence": "low",
+          "evidence": [
+            {
+              "author": "Pablo Galindo Salgado",
+              "evidence_id": "ev-726ff5a4a3",
+              "message_id": "post-10",
+              "quote": "prefer to still allow one scratch pad per thread because I think the cost makes sense (and we can make it much smaller than 4k if we need) and also makes attaching easier because it needs less pointers to follow but if we think that is too ",
+              "source_url": "https://discuss.python.org/t/pep-768-safe-external-debugger-interface-for-cpython/73969/10"
+            },
+            {
+              "author": "Pablo Galindo Salgado",
+              "evidence_id": "ev-726ff5a4a3",
+              "message_id": "post-10",
+              "quote": "prefer to still allow one scratch pad per thread because I think the cost makes sense (and we can make it much smaller than 4k if we need) and also makes attaching easier because it needs less pointers to follow but if we think that is too ",
+              "source_url": "https://discuss.python.org/t/pep-768-safe-external-debugger-interface-for-cpython/73969/10"
+            }
+          ],
+          "reason": "Pablog Salgado explicitly states he prefers per-thread scratch pads rather than a global one",
+          "status": "rejected",
+          "title": "Use a global scratch space for all threads",
+          "touched_by_change": []
+        },
+        {
           "alternative_id": "alt-4",
           "confidence": "high",
           "evidence": [

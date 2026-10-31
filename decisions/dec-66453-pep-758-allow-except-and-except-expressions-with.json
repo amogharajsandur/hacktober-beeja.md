@@ -407,20 +407,6 @@
       "archive_url": null,
       "author": "Diego Russo",
       "created_at": "2024-10-03T11:01:57.671Z",
-      "end_offset": 75,
-      "evidence_id": "ev-09a763d292",
-      "message_id": "post-14",
-      "quote": "\"I welcome the PEP but I’m battled on the as e syntax and where it binds to.\"",
-      "source_hash": "sha256:ed4c469b91282cd2a3a7d975c88a6631656bebb98078f3762e47f5f63d8dcad5",
-      "source_url": "https://discuss.python.org/t/pep-758-allow-except-and-except-expressions-without-parentheses/66453/14",
-      "start_offset": 0,
-      "support": "unchecked",
-      "verification": "exact"
-    },
-    {
-      "archive_url": null,
-      "author": "Diego Russo",
-      "created_at": "2024-10-03T11:01:57.671Z",
       "end_offset": 760,
       "evidence_id": "ev-af25162906",
       "message_id": "post-14",
@@ -612,6 +598,20 @@
       "start_offset": 0,
       "support": "does_not_support",
       "verification": "exact"
+    },
+    {
+      "archive_url": null,
+      "author": "Brett Cannon",
+      "created_at": "2025-03-04T20:11:12.680Z",
+      "end_offset": 154,
+      "evidence_id": "ev-0db45544a9",
+      "message_id": "post-59",
+      "quote": "We have submitted the PEP to the SC: PEP 758 -- Allow except and except* expressions without parentheses · Issue #281 · python/steering-council · GitHub .",
+      "source_hash": "sha256:d441d342a0871eaeec769370f056e0261608e2c3f7c44d921991b812169692e2",
+      "source_url": "https://discuss.python.org/t/pep-758-allow-except-and-except-expressions-without-parentheses/66453/59",
+      "start_offset": 0,
+      "support": "unchecked",
+      "verification": "approximate"
     },
     {
       "archive_url": null,

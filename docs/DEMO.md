@@ -34,6 +34,6 @@ recorded real run instead (step 3b) and say so: it is a *previous real run*, not
 7. **Agents.** `beeja-mcp --store decisions` (read-only MCP: search_decisions, get_decision,
    why_not, check_diff).
 
-8. **Honest numbers.** `beeja benchmark` → 5/8 recovered, precision 0.8, 85% quotes verified;
-   explain the misses (one PEP idea never appears in its thread; two are left `unresolved`
-   rather than guessed).
+8. **Honest numbers.** `beeja benchmark` → 6/8 recovered, precision 0.833, 86% quotes verified;
+   explain the misses (one PEP idea never appears in its thread; PEP 758's `as`-clause idea was
+   named back to front by qwen3:4b and withheld by the support check rather than guessed).
