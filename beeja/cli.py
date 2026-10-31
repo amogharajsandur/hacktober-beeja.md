@@ -42,8 +42,13 @@ def cmd_validate(args: argparse.Namespace) -> int:
 
 
 def cmd_extract(args: argparse.Namespace) -> int:
+    import os
+
     from .extract import extract
 
+    for flag, var in ((args.provider, "BEEJA_PROVIDER"), (args.model, "BEEJA_MODEL"), (args.base_url, "BEEJA_BASE_URL")):
+        if flag:
+            os.environ[var] = flag
     try:
         discussion = load_discussion(args.input)
         provider = provider_from_env(
@@ -59,6 +64,9 @@ def cmd_extract(args: argparse.Namespace) -> int:
             print(f"[beeja] {msg}", file=sys.stderr)
 
     progress(f"{len(discussion.messages)} messages from {args.input}; model {provider.name}")
+    if any(provider.name.startswith(p + ":") for p in ("openai", "anthropic", "gemini", "xai")):
+        print("[beeja] warning: this is a closed-model API. The hackathon rules score closed models 0 for "
+              "open-source AI use; the declared model is qwen3:4b (local).", file=sys.stderr)
     try:
         record = extract(
             discussion, provider, max_chars=args.chunk_chars, support_check=not args.no_support_check,
@@ -244,6 +252,32 @@ def cmd_export_madr(args: argparse.Namespace) -> int:
     return EXIT_OK
 
 
+def cmd_providers(args: argparse.Namespace) -> int:
+    from .model_adapter import PRESETS, load_dotenv, resolve_provider_name
+
+    load_dotenv()
+    try:
+        active = resolve_provider_name()
+    except ModelError as exc:
+        active = f"(error: {exc})"
+    rows = []
+    for name, (kind, base, keys, model, open_w) in PRESETS.items():
+        rows.append({"provider": name, "api": kind, "base_url": base, "key_env": list(keys),
+                     "default_model": model, "open_weight_default": open_w})
+    if args.json:
+        _print_json({"active": active, "providers": rows})
+        return EXIT_OK
+    print(f"active (from environment): {active}\n")
+    print(f"{'provider':<18}{'default model':<52}key variable")
+    for r in rows:
+        tag = "" if r["open_weight_default"] else "  [closed model]"
+        print(f"{r['provider']:<18}{(r['default_model'] or '(set BEEJA_MODEL)'):<52}"
+              f"{' / '.join(r['key_env']) or '-'}{tag}")
+    print("\nPut any key in BEEJA_API_KEY (or a .env file); the provider is detected from its prefix.\n"
+          "Override with BEEJA_PROVIDER / BEEJA_MODEL / BEEJA_BASE_URL or --provider/--model/--base-url.")
+    return EXIT_OK
+
+
 def cmd_schema(args: argparse.Namespace) -> int:
     _print_json(json_schema())
     return EXIT_OK
@@ -269,6 +303,9 @@ def build_parser() -> argparse.ArgumentParser:
     e.add_argument("--record", help="append raw model exchanges to this JSONL file")
     e.add_argument("--replay", help="replay model exchanges from this JSONL file (no live model)")
     e.add_argument("--chunk-chars", type=int, default=7000, help="max characters per model chunk")
+    e.add_argument("--provider", help="ollama (default), any preset from `beeja providers`, or openai-compatible")
+    e.add_argument("--model", help="model name for the provider (default: the preset's default)")
+    e.add_argument("--base-url", help="custom endpoint, e.g. http://server:8000/v1")
     e.add_argument("--no-outcome-pass", action="store_true", help="skip the reply-tree outcome pass")
     e.add_argument("--no-support-check", action="store_true", help="skip the second model pass that checks support")
     e.add_argument("--json", action="store_true", help="print the record to stdout even with --output")
@@ -324,6 +361,10 @@ def build_parser() -> argparse.ArgumentParser:
     xm.add_argument("--store", default="decisions")
     xm.add_argument("--output", "-o")
     xm.set_defaults(func=cmd_export_madr)
+
+    pv = sub.add_parser("providers", help="list supported model providers and the active one")
+    pv.add_argument("--json", action="store_true")
+    pv.set_defaults(func=cmd_providers)
 
     s = sub.add_parser("schema", help="print the DecisionRecord JSON Schema")
     s.set_defaults(func=cmd_schema)
