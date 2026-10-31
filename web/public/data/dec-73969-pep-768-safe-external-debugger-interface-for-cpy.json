@@ -168,6 +168,14 @@
    "role": "admin",
    "source_url": "https://discuss.python.org/t/pep-768-safe-external-debugger-interface-for-cpython/73969/4"
   },
+  "post-40": {
+   "author": "Mark Shannon",
+   "body": "Apparently the reference implementation is not to be trusted\n\nComparing 60ff67d010078eca15a74b1429caf779ac4f9c74…remote_pdb · pablogsal/cpython",
+   "created_at": "2024-12-13T11:45:43.611Z",
+   "reply_to": "post-38",
+   "role": null,
+   "source_url": "https://discuss.python.org/t/pep-768-safe-external-debugger-interface-for-cpython/73969/40"
+  },
   "post-42": {
    "author": "Mark Shannon",
    "body": "The PEP has a whole section dedicated to security\n\nIndeed it does but, as @steve.dower points out, it is solely focused on a single line of defense: preventing compromise in the first place.\n\nI’m not a security expert by any means, but there should be more than one line of defense here.\n\nFrom what you’ve said in this thread, maybe there are, but that isn’t clear in the PEP.\n\nI think the PEP should address how we prevent:\n\n- compromise in the first place (you already cover this)\n\n- this PEP making a compromised situation worse\n\n- this PEP allowing attackers to avoid detection\n\n(I’m still very much in favor of the PEP, just a bit concerned about the security impact)",
@@ -1305,6 +1313,20 @@
    {
     "archive_url": null,
     "author": "Mark Shannon",
+    "created_at": "2024-12-13T11:45:43.611Z",
+    "end_offset": 60,
+    "evidence_id": "ev-f1d26407a6",
+    "message_id": "post-40",
+    "quote": "\"Apparently the reference implementation is not to be trusted\"",
+    "source_hash": "sha256:4adb6784795141bcd39e106dede371f0b35ed085795a5b4ab53367bd0cc86f2b",
+    "source_url": "https://discuss.python.org/t/pep-768-safe-external-debugger-interface-for-cpython/73969/40",
+    "start_offset": 0,
+    "support": "unchecked",
+    "verification": "exact"
+   },
+   {
+    "archive_url": null,
+    "author": "Mark Shannon",
     "created_at": "2024-12-13T12:23:25.357Z",
     "end_offset": null,
     "evidence_id": "ev-140241d431",
@@ -1461,12 +1483,13 @@
   "metadata": {
    "ai_extracted": true,
    "chunks": 7,
-   "evidence_total": 45,
-   "evidence_verified": 41,
-   "extractor": "extract-v2+support-v2",
+   "evidence_total": 46,
+   "evidence_verified": 42,
+   "extractor": "extract-v2+outcome-v1+support-v2",
    "human_reviewed": false,
    "messages": 59,
    "model": "ollama:qwen3:4b",
+   "outcome_pass_calls": 3,
    "support_checks": 5
   },
   "presentation": null,

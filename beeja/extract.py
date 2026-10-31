@@ -31,7 +31,7 @@ from .schema import (
     SourceMessage,
 )
 
-PROMPT_VERSION = "extract-v2+support-v2"
+PROMPT_VERSION = "extract-v2+outcome-v1+support-v2"
 STATUSES = [s.value for s in AlternativeStatus]
 
 SYSTEM = """You analyse software design discussions and recover the decision history.
@@ -271,6 +271,7 @@ def extract(
     *,
     max_chars: int = 7000,
     support_check: bool = True,
+    outcome_pass: bool = True,
     progress=None,
 ) -> DecisionRecord:
     chunks = chunk_discussion(d, max_chars=max_chars)
@@ -307,7 +308,14 @@ def extract(
                     (str(a.get("stance")), str(a.get("text") or "").strip(),
                      str(a.get("message_id") or ""), str(a.get("quote") or ""))
                 )
+    outcome_calls = 0
+    if outcome_pass:
+        from .outcome import run_outcome_pass
+
+        outcome_calls = run_outcome_pass(d, clusters, provider, progress=progress)
     record = build_record(d, clusters, questions, provider_name=provider.name, n_chunks=len(chunks))
+    if outcome_pass:
+        record.metadata["outcome_pass_calls"] = outcome_calls
     if support_check:
         from .support import verify_support
 

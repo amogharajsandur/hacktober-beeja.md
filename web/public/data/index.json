@@ -23,7 +23,7 @@
   "id": "dec-discussion-quillfmt-which-configuration-file-format-should",
   "question": "quillfmt: which configuration file format should we support?",
   "status": "partially_decided",
-  "summary": "7 alternatives recovered from 20 messages: 1 proposed, 1 accepted, 2 rejected, 1 withdrawn, 1 deferred, 1 unresolved.",
+  "summary": "7 alternatives recovered from 20 messages: 1 accepted, 2 rejected, 1 withdrawn, 1 deferred, 2 unresolved.",
   "topic": "quillfmt: which configuration file format should we support?"
  }
 ]

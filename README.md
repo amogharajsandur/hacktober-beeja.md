@@ -76,7 +76,14 @@ whose messages start with `[id] author (role): text`.
    latest verified claim by message position wins; criticism without a stated decision is
    `unresolved`, never `rejected`. A rejection is `explicit` only if the verified passage itself
    states an outcome, otherwise `inferred` with `low` confidence.
-6. **Support check** (second model pass, `beeja/support.py`) — for every accepted / rejected /
+6. **Reply-tree outcome pass** (`beeja/outcome.py`) — chunking can separate a proposal from the
+   reply that settles it. For each alternative still without a verified outcome, Beeja rebuilds
+   that alternative's own conversation from the reply structure (messages that mention or argue
+   about it, two levels of replies, and later messages by the thread's original author that use
+   its wording) and asks the model what happened to it. The answer is only a *claim*: it goes
+   through the same quote verification, status resolution and support check. Disable with
+   `--no-outcome-pass`.
+7. **Support check** (second model pass, `beeja/support.py`) — for every accepted / rejected /
    withdrawn / deferred outcome, the model sees only the claim and the surrounding source text
    and must say whether the passage actually states that outcome for that alternative. It can
    only weaken a finding: `does_not_support` sends the outcome back to `unresolved` with a note,

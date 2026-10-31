@@ -1,7 +1,11 @@
 """Second-pass support checking can only weaken findings, never flip or upgrade them."""
 
-from beeja.extract import extract
+from functools import partial
+
+from beeja.extract import extract as _extract
 from tests.test_extract import TABS_RESPONSE, alt
+
+extract = partial(_extract, outcome_pass=False)
 
 
 def verdicts(*vs):
