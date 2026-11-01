@@ -335,6 +335,12 @@ function DecisionView({ id, focus }: { id: string; focus: string | null }) {
   const ev = Object.fromEntries(record.evidence.map((e) => [e.evidence_id, e]));
   const counts = countBy(record.alternatives.map((a) => a.status));
   const meta = record.metadata as Record<string, string | number | boolean>;
+  const history = record.metadata.related_history as {
+    query: string; warnings: string[]; sources: {
+      url: string; title: string; matched_terms: string[]; decision_id?: string;
+      status?: string; reused?: boolean; error?: string;
+    }[];
+  } | undefined;
   const decidedN = record.alternatives.filter((a) => DECIDED.has(a.status)).length;
   const alts = [...record.alternatives]
     .sort((a, b) => statusOrder(a.status) - statusOrder(b.status))
@@ -369,6 +375,21 @@ function DecisionView({ id, focus }: { id: string; focus: string | null }) {
         </div>
       </section>
 
+      {history && <section className="card">
+        <h2>Related decision history</h2>
+        <p>Candidate context from the same repository; similarity does not establish a shared decision.</p>
+        <p>Search: <code>{history.query}</code> · up to 3 sources, open and closed issues/PRs</p>
+        {history.warnings.map((warning, i) => <p key={i}>{warning}</p>)}
+        {history.sources.length === 0 && <p>No related sources selected.</p>}
+        <ul>{history.sources.map(source => <li key={source.url}>
+          <a href={source.url} target="_blank" rel="noreferrer">{source.title}</a>
+          <p>Matched terms: {source.matched_terms.join(", ")}</p>
+          {source.decision_id && <a href={`#/d/${encodeURIComponent(source.decision_id)}`}>
+            {source.status} · {source.reused ? "stored decision" : "recovered decision"} →
+          </a>}
+          {source.error && <p>{source.error}</p>}
+        </li>)}</ul>
+      </section>}
       {narrative.length > 0 && (
         <section className="card narrative">
           <h3 className="eyebrow">Summary</h3>
