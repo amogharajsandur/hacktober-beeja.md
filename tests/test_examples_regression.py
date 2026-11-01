@@ -24,9 +24,13 @@ def test_example_replays_to_committed_output(case):
     rec = extract(d, ReplayProvider(case / "model_exchanges.jsonl", model="qwen3:4b"))
     rec.metadata["model"] = "ollama:qwen3:4b"  # recorded from live Ollama; replay reports itself
     committed = (case / "decision.json").read_text()
-    for k in ("github", "imported_at"):  # import metadata is added after extraction
-        if k in json.loads(committed)["metadata"]:
-            rec.metadata[k] = json.loads(committed)["metadata"][k]
+    saved = json.loads(committed)
+    for k in ("github", "discourse", "imported_at"):  # import metadata is added after extraction
+        if k in saved["metadata"]:
+            rec.metadata[k] = saved["metadata"][k]
+    if case.parent.name == "imports":  # an import may get an "-import" id suffix to avoid clobbering a record
+        assert saved["id"] in (rec.id, f"{rec.id[:100]}-import")
+        rec.id = saved["id"]
     assert storage.dumps(rec) == committed
     assert check_integrity(rec) == []
 
