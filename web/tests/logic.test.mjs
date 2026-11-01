@@ -1,7 +1,7 @@
 // Transpile src/logic.ts with the project's own TypeScript compiler and import the result.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync, existsSync, readdirSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import ts from "typescript";
 
 const src = readFileSync(new URL("../src/logic.ts", import.meta.url), "utf8");
@@ -38,7 +38,7 @@ test("exported viewer data references real records", () => {
       }
     }
   }
-  assert.ok(readdirSync(dir).length === index.length + 1);
+  assert.equal(new Set(index.map((entry) => entry.id)).size, index.length);
 });
 
 test("parseBlocks keeps exact offsets for paragraphs, code, quotes and lists", () => {

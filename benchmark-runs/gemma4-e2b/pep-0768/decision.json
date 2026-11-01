@@ -1,0 +1,586 @@
+{
+  "alternatives": [
+    {
+      "alternative_id": "alt-1",
+      "confidence": "uncertain",
+      "description": "Adding an unconditional 4KB to every instance of PyInterpreterState and PyThreadState structures.",
+      "mentions": [],
+      "notes": [
+        "ignored 2 status claim(s) whose quote could not be verified"
+      ],
+      "opposing_evidence": [],
+      "proponents": [],
+      "reasons": [],
+      "rejection_type": null,
+      "status": "unresolved",
+      "status_evidence": [],
+      "status_support": "unchecked",
+      "supporting_evidence": [
+        "ev-24074530e8",
+        "ev-26bb0dfcc0",
+        "ev-fc42abc4fb",
+        "ev-7a81339ff2"
+      ],
+      "title": "Add an unconditional 4KB to every instance"
+    },
+    {
+      "alternative_id": "alt-2",
+      "confidence": "uncertain",
+      "description": "Making the interface a pointer and allocating a static scratch buffer in PyRuntime.",
+      "mentions": [],
+      "notes": [
+        "ignored 2 status claim(s) whose quote could not be verified"
+      ],
+      "opposing_evidence": [],
+      "proponents": [],
+      "reasons": [],
+      "rejection_type": null,
+      "status": "unresolved",
+      "status_evidence": [],
+      "status_support": "unchecked",
+      "supporting_evidence": [
+        "ev-4c58d865ca"
+      ],
+      "title": "Make the interface a pointer with static scratch buffer"
+    },
+    {
+      "alternative_id": "alt-3",
+      "confidence": "uncertain",
+      "description": "Allowing the debugger to orchestrate different threads executing different code.",
+      "mentions": [],
+      "notes": [
+        "ignored 2 status claim(s) whose quote could not be verified"
+      ],
+      "opposing_evidence": [],
+      "proponents": [],
+      "reasons": [],
+      "rejection_type": null,
+      "status": "unresolved",
+      "status_evidence": [],
+      "status_support": "unchecked",
+      "supporting_evidence": [
+        "ev-fdc4ac3944",
+        "ev-b38419c322"
+      ],
+      "title": "Allow the debugger to orchestrate thread execution"
+    },
+    {
+      "alternative_id": "alt-4",
+      "confidence": "uncertain",
+      "description": "Using one pointer per thread for the debugger interface.",
+      "mentions": [],
+      "notes": [
+        "ignored 2 status claim(s) whose quote could not be verified"
+      ],
+      "opposing_evidence": [],
+      "proponents": [],
+      "reasons": [],
+      "rejection_type": null,
+      "status": "unresolved",
+      "status_evidence": [],
+      "status_support": "unchecked",
+      "supporting_evidence": [
+        "ev-5dd6d50568"
+      ],
+      "title": "Use a pointer per thread"
+    },
+    {
+      "alternative_id": "alt-5",
+      "confidence": "uncertain",
+      "description": "Using a single global scratch space per process instead of per thread.",
+      "mentions": [],
+      "notes": [
+        "ignored 2 status claim(s) whose quote could not be verified"
+      ],
+      "opposing_evidence": [],
+      "proponents": [],
+      "reasons": [],
+      "rejection_type": null,
+      "status": "unresolved",
+      "status_evidence": [],
+      "status_support": "unchecked",
+      "supporting_evidence": [
+        "ev-3884bb1a01"
+      ],
+      "title": "Use global scratch space per process"
+    },
+    {
+      "alternative_id": "alt-6",
+      "confidence": "uncertain",
+      "description": "Disable the PEP by default to void the expose process feature.",
+      "mentions": [],
+      "notes": [
+        "ignored 1 status claim(s) whose quote could not be verified",
+        "outcome inferred: the cited passage does not itself state a decision",
+        "support check: cited passage does not support 'deferred' (checker read it as 'none'); outcome withheld"
+      ],
+      "opposing_evidence": [
+        "ev-163368632b"
+      ],
+      "proponents": [],
+      "reasons": [
+        {
+          "evidence_ids": [
+            "ev-163368632b"
+          ],
+          "premise": null,
+          "supported": true,
+          "text": "I prefer disable it by default or support a compile flag to disable it"
+        }
+      ],
+      "rejection_type": null,
+      "status": "unresolved",
+      "status_evidence": [
+        "ev-163368632b"
+      ],
+      "status_support": "does_not_support",
+      "supporting_evidence": [
+        "ev-439ede91de"
+      ],
+      "title": "Disable PEP by default"
+    },
+    {
+      "alternative_id": "alt-7",
+      "confidence": "low",
+      "description": "Support a compile flag or environment variable to disable the PEP.",
+      "mentions": [],
+      "notes": [
+        "ignored 1 status claim(s) whose quote could not be verified",
+        "outcome inferred: the cited passage does not itself state a decision",
+        "support check: passage only weakly supports the outcome"
+      ],
+      "opposing_evidence": [],
+      "proponents": [],
+      "reasons": [
+        {
+          "evidence_ids": [
+            "ev-94498134e1"
+          ],
+          "premise": null,
+          "supported": true,
+          "text": "Support a compile flag to disable it because it allows users to control the exposure."
+        }
+      ],
+      "rejection_type": null,
+      "status": "accepted",
+      "status_evidence": [
+        "ev-94498134e1"
+      ],
+      "status_support": "weak",
+      "supporting_evidence": [
+        "ev-94498134e1"
+      ],
+      "title": "Support a compile flag to disable it"
+    },
+    {
+      "alternative_id": "alt-8",
+      "confidence": "high",
+      "description": "Loading code from a file instead of reading directly from the buffer.",
+      "mentions": [],
+      "notes": [
+        "ignored 1 status claim(s) whose quote could not be verified"
+      ],
+      "opposing_evidence": [
+        "ev-fa6662f324",
+        "ev-6ce891c2ab"
+      ],
+      "proponents": [],
+      "reasons": [
+        {
+          "evidence_ids": [
+            "ev-fa6662f324"
+          ],
+          "premise": null,
+          "supported": true,
+          "text": "Having to write to and then read from a file may make things less responsive."
+        },
+        {
+          "evidence_ids": [
+            "ev-6ce891c2ab"
+          ],
+          "premise": null,
+          "supported": false,
+          "text": "If you want to execute from a file something like > exec(open(\"pathname\").read())> should work."
+        }
+      ],
+      "rejection_type": "explicit",
+      "status": "rejected",
+      "status_evidence": [
+        "ev-0341f83848"
+      ],
+      "status_support": "supports",
+      "supporting_evidence": [
+        "ev-6ce891c2ab"
+      ],
+      "title": "Load code from a file"
+    }
+  ],
+  "code_anchors": [
+    {
+      "kind": "symbol",
+      "note": "mentioned in post-3, post-4, post-10, post-28, post-29",
+      "repository": null,
+      "value": "PyRuntime"
+    },
+    {
+      "kind": "symbol",
+      "note": "mentioned in post-13, post-14",
+      "repository": null,
+      "value": "_PyRuntime"
+    },
+    {
+      "kind": "symbol",
+      "note": "mentioned in post-26, post-58",
+      "repository": null,
+      "value": "_PyRemoteDebuggerSupport"
+    },
+    {
+      "kind": "symbol",
+      "note": "mentioned in post-3",
+      "repository": null,
+      "value": "PyInterpreterState"
+    },
+    {
+      "kind": "symbol",
+      "note": "mentioned in post-3",
+      "repository": null,
+      "value": "PyThreadState"
+    },
+    {
+      "kind": "symbol",
+      "note": "mentioned in post-18",
+      "repository": null,
+      "value": "PyGILState_Ensure"
+    },
+    {
+      "kind": "symbol",
+      "note": "mentioned in post-18",
+      "repository": null,
+      "value": "PyGILState_Release"
+    },
+    {
+      "kind": "symbol",
+      "note": "mentioned in post-18",
+      "repository": null,
+      "value": "PyRun_SimpleString"
+    },
+    {
+      "kind": "symbol",
+      "note": "mentioned in post-49",
+      "repository": null,
+      "value": "_PyThreadStateImpl"
+    }
+  ],
+  "confidence": "medium",
+  "decided_at": null,
+  "decision_authority": null,
+  "evidence": [
+    {
+      "archive_url": null,
+      "author": "Steve Dower",
+      "created_at": "2024-12-11T16:54:31.434Z",
+      "end_offset": 209,
+      "evidence_id": "ev-24074530e8",
+      "message_id": "post-3",
+      "quote": "There’s some effort going towards making PyInterpreterState and PyThreadState structures lighter[1], so I feel like adding an unconditional 4KB to every instance might be a bit much.",
+      "source_hash": "sha256:84487d47e8f6e47a7d16fe9bae223a3bbfa369363ccec2598d239ad7ef304486",
+      "source_url": "https://discuss.python.org/t/pep-768-safe-external-debugger-interface-for-cpython/73969/3",
+      "start_offset": 28,
+      "support": "unchecked",
+      "verification": "exact"
+    },
+    {
+      "archive_url": null,
+      "author": "Steve Dower",
+      "created_at": "2024-12-11T16:54:31.434Z",
+      "end_offset": 316,
+      "evidence_id": "ev-4c58d865ca",
+      "message_id": "post-3",
+      "quote": "Any reason we can’t just make this a pointer (and perhaps allocate a static scratch buffer in PyRuntime)?",
+      "source_hash": "sha256:84487d47e8f6e47a7d16fe9bae223a3bbfa369363ccec2598d239ad7ef304486",
+      "source_url": "https://discuss.python.org/t/pep-768-safe-external-debugger-interface-for-cpython/73969/3",
+      "start_offset": 211,
+      "support": "unchecked",
+      "verification": "exact"
+    },
+    {
+      "archive_url": null,
+      "author": "Pablo Galindo Salgado",
+      "created_at": "2024-12-11T16:58:52.969Z",
+      "end_offset": 299,
+      "evidence_id": "ev-fdc4ac3944",
+      "message_id": "post-4",
+      "quote": "We want to allow the user to select what Python thread executes what code, so technically the debugger may need to orchestrate different threads executing different code",
+      "source_hash": "sha256:287c4131caf3d43a2c17309d85704190ef1facf2cdc3add9466edc8805295a12",
+      "source_url": "https://discuss.python.org/t/pep-768-safe-external-debugger-interface-for-cpython/73969/4",
+      "start_offset": 130,
+      "support": "unchecked",
+      "verification": "exact"
+    },
+    {
+      "archive_url": null,
+      "author": "Steve Dower",
+      "created_at": "2024-12-11T17:00:42.626Z",
+      "end_offset": 384,
+      "evidence_id": "ev-5dd6d50568",
+      "message_id": "post-5",
+      "quote": "One pointer per thread is fine, and assuming there’s only going to be one debugger then it’s up to them to divide up the scratch space.",
+      "source_hash": "sha256:08825253f31c25f951e16609ec7099dbb0f7348c0c1cca2335c267c670514a87",
+      "source_url": "https://discuss.python.org/t/pep-768-safe-external-debugger-interface-for-cpython/73969/5",
+      "start_offset": 250,
+      "support": "unchecked",
+      "verification": "exact"
+    },
+    {
+      "archive_url": null,
+      "author": "Steve Dower",
+      "created_at": "2024-12-11T17:04:14.758Z",
+      "end_offset": 745,
+      "evidence_id": "ev-3884bb1a01",
+      "message_id": "post-8",
+      "quote": "Hence the global scratch space that can be written to and then used as the pointer.",
+      "source_hash": "sha256:efec2ce91de1e2d03fdbbf2619c2c2ffb6ae5027281621f3f9b8cb548034ac86",
+      "source_url": "https://discuss.python.org/t/pep-768-safe-external-debugger-interface-for-cpython/73969/8",
+      "start_offset": 663,
+      "support": "unchecked",
+      "verification": "exact"
+    },
+    {
+      "archive_url": null,
+      "author": null,
+      "created_at": "2024-12-11T17:21:38.855Z",
+      "end_offset": 153,
+      "evidence_id": "ev-26bb0dfcc0",
+      "message_id": "post-10",
+      "quote": ". An exploit that lets you write one block of data into a running process could let you reliably gain full execution with this feature",
+      "source_hash": "sha256:8b14d5101a7597fcfd03952ea392aca06d7026a5c7ec9a287a9b09965328bf9a",
+      "source_url": "https://discuss.python.org/t/pep-768-safe-external-debugger-interface-for-cpython/73969/10",
+      "start_offset": 21,
+      "support": "unchecked",
+      "verification": "exact"
+    },
+    {
+      "archive_url": null,
+      "author": "Pablo Galindo Salgado",
+      "created_at": "2024-12-11T17:21:38.855Z",
+      "end_offset": null,
+      "evidence_id": "ev-51197310e8",
+      "message_id": "post-10",
+      "quote": "I think 4k is probably too much so we can try to make it smaller for sure, but unless we don’t want to allow different threads to be able to run different code (which I think is quite important) then we will need as many scratch pads as threads anyway.",
+      "source_hash": "sha256:8b14d5101a7597fcfd03952ea392aca06d7026a5c7ec9a287a9b09965328bf9a",
+      "source_url": "https://discuss.python.org/t/pep-768-safe-external-debugger-interface-for-cpython/73969/10",
+      "start_offset": null,
+      "support": "unchecked",
+      "verification": "not_found"
+    },
+    {
+      "archive_url": null,
+      "author": "Pablo Galindo Salgado",
+      "created_at": "2024-12-13T06:21:41.506Z",
+      "end_offset": 1345,
+      "evidence_id": "ev-439ede91de",
+      "message_id": "post-29",
+      "quote": "It will be not be disabled by default because the idea is that users can benefit from it when they need to debug their code or profile it.",
+      "source_hash": "sha256:8cd7087607a37ac4ad703d25c7c79f9822a0fea9a5763dca8f6023edcdd27768",
+      "source_url": "https://discuss.python.org/t/pep-768-safe-external-debugger-interface-for-cpython/73969/29",
+      "start_offset": 1208,
+      "support": "unchecked",
+      "verification": "exact"
+    },
+    {
+      "archive_url": null,
+      "author": "Nadeshiko Manju",
+      "created_at": "2024-12-13T07:56:27.531Z",
+      "end_offset": 856,
+      "evidence_id": "ev-163368632b",
+      "message_id": "post-30",
+      "quote": "I prefer disable it by default or support a compile flag to disable it",
+      "source_hash": "sha256:e82e36992d03e38ae235aa83779cdbbe157671e2e3802aa3c867e9dd6e5cad83",
+      "source_url": "https://discuss.python.org/t/pep-768-safe-external-debugger-interface-for-cpython/73969/30",
+      "start_offset": 786,
+      "support": "does_not_support",
+      "verification": "exact"
+    },
+    {
+      "archive_url": null,
+      "author": "Pablo Galindo Salgado",
+      "created_at": "2024-12-13T08:03:13.651Z",
+      "end_offset": 200,
+      "evidence_id": "ev-94498134e1",
+      "message_id": "post-31",
+      "quote": "We will likely add a compiler (and maybe runtime) flag or env var to disable it, and this is subjected to the auditing interface as well.",
+      "source_hash": "sha256:4a964196eba6dd216151cb47056d7938952a068055e6dfa13c954394b9330221",
+      "source_url": "https://discuss.python.org/t/pep-768-safe-external-debugger-interface-for-cpython/73969/31",
+      "start_offset": 64,
+      "support": "weak",
+      "verification": "exact"
+    },
+    {
+      "archive_url": null,
+      "author": null,
+      "created_at": "2024-12-13T10:52:57.910Z",
+      "end_offset": 177,
+      "evidence_id": "ev-fc42abc4fb",
+      "message_id": "post-35",
+      "quote": "Each thread uses between 2M (I think) on Windows to 8M (on linux) for the C stack. The Python stack takes another multiple of 64kb. An extra 4kb won’t matter.",
+      "source_hash": "sha256:a5ce143dc4fcda907a569b52690ae7a65c8068250f5f2fde6566fc7bbfba232c",
+      "source_url": "https://discuss.python.org/t/pep-768-safe-external-debugger-interface-for-cpython/73969/35",
+      "start_offset": 20,
+      "support": "unchecked",
+      "verification": "exact"
+    },
+    {
+      "archive_url": null,
+      "author": "Pablo Galindo Salgado",
+      "created_at": "2024-12-13T11:42:18.611Z",
+      "end_offset": 466,
+      "evidence_id": "ev-0341f83848",
+      "message_id": "post-38",
+      "quote": "I think you are confused: the PEP proposes loading it from the buffer and the idea to load it from a file is in the rejected ideas section.",
+      "source_hash": "sha256:928aa73075f19c81408617b08d0815d74e6d1294f818442086d89052ca03d62a",
+      "source_url": "https://discuss.python.org/t/pep-768-safe-external-debugger-interface-for-cpython/73969/38",
+      "start_offset": 328,
+      "support": "supports",
+      "verification": "exact"
+    },
+    {
+      "archive_url": null,
+      "author": null,
+      "created_at": "2024-12-13T11:42:18.611Z",
+      "end_offset": 197,
+      "evidence_id": "ev-6ce891c2ab",
+      "message_id": "post-38",
+      "quote": "If you want to execute from a file something like > exec(open(\"pathname\").read())> should work.",
+      "source_hash": "sha256:928aa73075f19c81408617b08d0815d74e6d1294f818442086d89052ca03d62a",
+      "source_url": "https://discuss.python.org/t/pep-768-safe-external-debugger-interface-for-cpython/73969/38",
+      "start_offset": 102,
+      "support": "does_not_support",
+      "verification": "exact"
+    },
+    {
+      "archive_url": null,
+      "author": null,
+      "created_at": "2024-12-13T11:42:18.611Z",
+      "end_offset": 325,
+      "evidence_id": "ev-fa6662f324",
+      "message_id": "post-38",
+      "quote": "For small commands in an interactive debugger, having to write to and then read from a file may make things less responsive.",
+      "source_hash": "sha256:928aa73075f19c81408617b08d0815d74e6d1294f818442086d89052ca03d62a",
+      "source_url": "https://discuss.python.org/t/pep-768-safe-external-debugger-interface-for-cpython/73969/38",
+      "start_offset": 202,
+      "support": "supports",
+      "verification": "exact"
+    },
+    {
+      "archive_url": null,
+      "author": "Mark Shannon",
+      "created_at": "2024-12-13T12:23:25.357Z",
+      "end_offset": 581,
+      "evidence_id": "ev-b38419c322",
+      "message_id": "post-42",
+      "quote": "I think the PEP should address how we prevent:\n\n- compromise in the first place (you already cover this)\n\n- this PEP making a compromised situation worse\n\n- this PEP allowing attackers to avoid detection",
+      "source_hash": "sha256:4bdc59dbca8d1bafde7f674ca66927e5a77b31aa71824c44923abef88e64a2a2",
+      "source_url": "https://discuss.python.org/t/pep-768-safe-external-debugger-interface-for-cpython/73969/42",
+      "start_offset": 378,
+      "support": "unchecked",
+      "verification": "approximate"
+    },
+    {
+      "archive_url": null,
+      "author": null,
+      "created_at": "2024-12-16T11:53:59.954Z",
+      "end_offset": 68,
+      "evidence_id": "ev-7a81339ff2",
+      "message_id": "post-53",
+      "quote": "Avoiding races on a global buffer will be tricky.",
+      "source_hash": "sha256:f4a83f887e9705d98800c3555b290e9fb6fd028fc9b8f345f0e555476145933f",
+      "source_url": "https://discuss.python.org/t/pep-768-safe-external-debugger-interface-for-cpython/73969/53",
+      "start_offset": 20,
+      "support": "unchecked",
+      "verification": "exact"
+    },
+    {
+      "archive_url": null,
+      "author": "Pablo Galindo Salgado",
+      "created_at": "2024-12-16T14:08:06.198Z",
+      "end_offset": null,
+      "evidence_id": "ev-7947512799",
+      "message_id": "post-54",
+      "quote": "Small update: we have updated the PEP text to account for some of the points mentioned so far: - We have added a section explaining the deactivation mechanism based on a compile-time flag, a runtime environment variable and a -X option. - We have improved the specification and security sections. [...] f the code itself. We have made this decision to address the in-process security scenarios, ensuring that an attacker with arbitrary memory write capabilities cannot escalate to arbitrary code execution . All of this is covered in the \" Security Implications\" section.",
+      "source_hash": "sha256:6f569174049cdcb397e0f6d44ddafc837a313a1d77a263e1870a2e57d37eb67d",
+      "source_url": "https://discuss.python.org/t/pep-768-safe-external-debugger-interface-for-cpython/73969/54",
+      "start_offset": null,
+      "support": "unchecked",
+      "verification": "not_found"
+    },
+    {
+      "archive_url": null,
+      "author": null,
+      "created_at": null,
+      "end_offset": null,
+      "evidence_id": "ev-0d4f8739cf",
+      "message_id": "",
+      "quote": "unresolved",
+      "source_hash": null,
+      "source_url": null,
+      "start_offset": null,
+      "support": "unchecked",
+      "verification": "missing_message"
+    },
+    {
+      "archive_url": null,
+      "author": null,
+      "created_at": null,
+      "end_offset": null,
+      "evidence_id": "ev-2ab002b8ac",
+      "message_id": "",
+      "quote": "If people feel like a global buffer is best we could separate the bit that triggers execution from the buffer and place the buffer in the runtime and the bit in the thread state.\nThat way we could still control what thread executes but there is a single buffer of execution. Not a fan of this but if there is consensus around it happy to do it.",
+      "source_hash": null,
+      "source_url": null,
+      "start_offset": null,
+      "support": "unchecked",
+      "verification": "missing_message"
+    },
+    {
+      "archive_url": null,
+      "author": null,
+      "created_at": null,
+      "end_offset": null,
+      "evidence_id": "ev-89a4931f56",
+      "message_id": "",
+      "quote": "Hence the global scratch space that can be written to and then used as the pointer. But we would only have one 4KB space per process, rather than 4KB per thread.",
+      "source_hash": null,
+      "source_url": null,
+      "start_offset": null,
+      "support": "unchecked",
+      "verification": "missing_message"
+    }
+  ],
+  "id": "dec-73969-pep-768-safe-external-debugger-interface-for-cpy",
+  "metadata": {
+    "ai_extracted": true,
+    "chunks": 7,
+    "evidence_total": 20,
+    "evidence_verified": 15,
+    "extractor": "extract-v2+outcome-v1+support-v2",
+    "human_reviewed": false,
+    "messages": 59,
+    "model": "ollama:gemma4:e2b",
+    "outcome_pass_calls": 7,
+    "support_checks": 5
+  },
+  "presentation": null,
+  "question": "How are you planning to access the thread state in a safe way? Will you acquire HEAD_LOCK() out of process?",
+  "reasons": [],
+  "schema_version": "1.0",
+  "source_threads": [
+    "https://discuss.python.org/t/pep-768-safe-external-debugger-interface-for-cpython/73969"
+  ],
+  "status": "partially_decided",
+  "summary": "8 alternatives recovered from 59 messages: 1 accepted, 1 rejected, 6 unresolved.",
+  "superseded_by": [],
+  "supersedes": [],
+  "topic": "PEP 768 – Safe external debugger interface for CPython",
+  "valid_from": null,
+  "valid_until": null
+}
