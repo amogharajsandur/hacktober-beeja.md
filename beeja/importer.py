@@ -68,6 +68,7 @@ def import_url(
     *,
     root: Path = Path("."),
     reimport: bool = False,
+    discover_related: bool = True,
     provider: ModelProvider | None = None,
     gh: GitHubClient | None = None,
     progress: Callable[[str], None] = lambda _m: None,
@@ -158,6 +159,19 @@ def import_url(
     counts: dict[str, int] = {}
     for a in record.alternatives:
         counts[a.status] = counts.get(a.status, 0) + 1
+    if src.kind == "github" and discover_related:
+        from .discovery import discover
+        from .github import token_from_env
+
+        def import_related(link):
+            return import_url(link, root=root, gh=gh, discover_related=False, progress=progress)
+
+        record.metadata["related_history"] = discover(
+            data, root, gh or GitHubClient(token_from_env()), import_related, progress)
+        with WRITE_LOCK:
+            (case_dir / "decision.json").write_text(storage.dumps(record), encoding="utf-8")
+            storage.save(record, root / "decisions")
+            export_web(roots(root), root / "web" / "public" / "data")
     progress(f"Saved {record.id}: {record.summary}")
     return {
         "decision_id": record.id, "case": src.case, "url": src.url, "label": src.label, "summary": record.summary,

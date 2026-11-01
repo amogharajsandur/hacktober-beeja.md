@@ -517,3 +517,19 @@ human review workflow for records, larger multi-PEP benchmark.
 ## License
 
 MIT — see [LICENSE](LICENSE).
+
+### Automatic related GitHub history
+
+New GitHub imports (UI or `beeja import`) automatically search the same repository
+for related open and closed issues and PRs. Beeja searches using two title terms,
+examines the first ten relevance-ranked hits, and selects at most three sources
+by shared title/body terms. Matching records already in the local decision store
+are reused; other selected threads go through the normal extraction pipeline.
+Related imports do not recursively search again.
+
+The dossier's **Related decision history** section shows the query, matching terms,
+source links, each source's outcome and links to its own decision/evidence. Similarity
+is candidate context, not proof that decisions apply across threads. Search/rate-limit
+and related-import errors are visible without discarding the starting decision.
+Re-import an old GitHub dossier to add this section. GitHub Discussions and exhaustive
+repository crawling are not included; PEP/Discourse imports keep their existing behavior.
