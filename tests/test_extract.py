@@ -158,6 +158,8 @@ def test_replay_unknown_prompt_errors(tmp_path, tabs_discussion):
 
 
 def test_cli_extract_replay(tmp_path, tabs_discussion, monkeypatch, capsys):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("BEEJA_MODEL", "qwen3:4b")
     class FakeOllama:
         model = "qwen3:4b"
         name = "ollama:qwen3:4b"

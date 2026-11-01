@@ -1,0 +1,6 @@
+{
+  "exit_code": 0,
+  "elapsed_seconds": 239.96,
+  "model": "gemma4:e2b",
+  "num_ctx": 8192
+}

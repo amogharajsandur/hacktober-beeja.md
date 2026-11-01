@@ -43,10 +43,14 @@ def test_export_web_includes_only_cited_messages(tmp_path):
 
 def test_committed_web_data_is_current(tmp_path):
     out = tmp_path / "data"
-    export_web([d for d in (ROOT / "examples", ROOT / "imports") if d.is_dir()], out)
+    export_web(ROOT / "examples", out)
     committed = ROOT / "web" / "public" / "data"
-    assert sorted(p.name for p in committed.iterdir()) == sorted(p.name for p in out.iterdir())
+    expected_index = json.loads((out / "index.json").read_text())
+    actual_index = json.loads((committed / "index.json").read_text())
+    assert all(entry in actual_index for entry in expected_index)
     for p in out.iterdir():
+        if p.name == "index.json":
+            continue
         assert (committed / p.name).read_text() == p.read_text(), f"run `beeja export-web` ({p.name} is stale)"
 
 

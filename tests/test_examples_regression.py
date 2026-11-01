@@ -14,7 +14,10 @@ from beeja.model_adapter import ReplayProvider
 from beeja.schema import check_integrity
 
 ROOT = Path(__file__).resolve().parent.parent
-CASES = sorted(p.parent for d in ("examples", "imports") for p in (ROOT / d).glob("*/model_exchanges.jsonl"))
+# Local imports are user data; only the checked-in PEP import is a replay fixture.
+CASES = sorted([p.parent for p in (ROOT / "examples").glob("*/model_exchanges.jsonl")] + [
+    ROOT / "imports" / "discourse-discuss-python-org-66453",
+])
 
 
 @pytest.mark.parametrize("case", CASES, ids=[c.name for c in CASES])
@@ -40,20 +43,21 @@ def test_examples_exist():
 
 
 def test_decision_store_matches_examples():
-    """decisions/ (the store the CLI, MCP and diff advisories read) is exactly the example and import outputs."""
+    """The store includes the committed example outputs, alongside any local imports."""
     store = {p.name: p.read_text() for p in (ROOT / "decisions").glob("*.json")}
     expected = {}
     for case in CASES:
         rec = storage.load_file(case / "decision.json")[0]
         expected[f"{rec.id}.json"] = (case / "decision.json").read_text()
-    assert store == expected
+    assert all(store.get(name) == contents for name, contents in expected.items())
 
 
 @pytest.mark.parametrize("patch", sorted((ROOT / "examples" / "check-diff").glob("*.patch")), ids=lambda p: p.stem)
 def test_committed_advisories_are_current(patch):
     from beeja.diff import check_diff, render_text
 
-    report = check_diff(storage.load_dir(ROOT / "decisions"), patch.read_text())
+    records = [storage.load_file(case / "decision.json")[0] for case in CASES]
+    report = check_diff(records, patch.read_text())
     assert render_text(report) == patch.with_suffix(".advisory.txt").read_text()
     if patch.stem.startswith("unrelated"):
         assert report["advisories"] == []

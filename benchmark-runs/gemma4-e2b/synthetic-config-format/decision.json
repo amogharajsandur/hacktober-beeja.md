@@ -1,0 +1,438 @@
+{
+  "alternatives": [
+    {
+      "alternative_id": "alt-1",
+      "confidence": "uncertain",
+      "description": "Using TOML within pyproject.toml for configuration.",
+      "mentions": [],
+      "notes": [
+        "ignored 1 status claim(s) whose quote could not be verified"
+      ],
+      "opposing_evidence": [],
+      "proponents": [],
+      "reasons": [],
+      "rejection_type": null,
+      "status": "proposed",
+      "status_evidence": [],
+      "status_support": "unchecked",
+      "supporting_evidence": [
+        "ev-6162d2a45b"
+      ],
+      "title": "TOML inside pyproject.toml"
+    },
+    {
+      "alternative_id": "alt-2",
+      "confidence": "uncertain",
+      "description": "Using a dedicated YAML file for configuration.",
+      "mentions": [],
+      "notes": [
+        "ignored 1 status claim(s) whose quote could not be verified"
+      ],
+      "opposing_evidence": [
+        "ev-d0a000b59e"
+      ],
+      "proponents": [],
+      "reasons": [
+        {
+          "evidence_ids": [
+            "ev-d0a000b59e"
+          ],
+          "premise": null,
+          "supported": false,
+          "text": "Implicit typing causes silent errors and requires an extra dependency."
+        }
+      ],
+      "rejection_type": null,
+      "status": "proposed",
+      "status_evidence": [],
+      "status_support": "unchecked",
+      "supporting_evidence": [],
+      "title": "YAML file"
+    },
+    {
+      "alternative_id": "alt-3",
+      "confidence": "uncertain",
+      "description": "Using the INI file format for configuration.",
+      "mentions": [],
+      "notes": [
+        "ignored 1 status claim(s) whose quote could not be verified"
+      ],
+      "opposing_evidence": [
+        "ev-63f05934be"
+      ],
+      "proponents": [],
+      "reasons": [
+        {
+          "evidence_ids": [
+            "ev-63f05934be"
+          ],
+          "premise": null,
+          "supported": false,
+          "text": "It cannot handle the required nested structure for overrides."
+        }
+      ],
+      "rejection_type": null,
+      "status": "proposed",
+      "status_evidence": [],
+      "status_support": "unchecked",
+      "supporting_evidence": [
+        "ev-e1ff7fe185"
+      ],
+      "title": "INI file"
+    },
+    {
+      "alternative_id": "alt-4",
+      "confidence": "uncertain",
+      "description": "Using a plain Python file to store configuration dynamically.",
+      "mentions": [],
+      "notes": [
+        "ignored 1 status claim(s) whose quote could not be verified"
+      ],
+      "opposing_evidence": [
+        "ev-244f1b90a0"
+      ],
+      "proponents": [],
+      "reasons": [
+        {
+          "evidence_ids": [
+            "ev-244f1b90a0"
+          ],
+          "premise": null,
+          "supported": false,
+          "text": "Executing user Python is a security risk in CI environments."
+        }
+      ],
+      "rejection_type": null,
+      "status": "proposed",
+      "status_evidence": [],
+      "status_support": "unchecked",
+      "supporting_evidence": [],
+      "title": "quillfmt_config.py (Plain Python file)"
+    },
+    {
+      "alternative_id": "alt-5",
+      "confidence": "uncertain",
+      "description": "Supporting a standalone TOML file for repositories not in Python projects.",
+      "mentions": [],
+      "notes": [
+        "ignored 1 status claim(s) whose quote could not be verified"
+      ],
+      "opposing_evidence": [],
+      "proponents": [],
+      "reasons": [],
+      "rejection_type": null,
+      "status": "proposed",
+      "status_evidence": [],
+      "status_support": "unchecked",
+      "supporting_evidence": [
+        "ev-ab6a786665"
+      ],
+      "title": "Standalone .quillfmt.toml file"
+    },
+    {
+      "alternative_id": "alt-6",
+      "confidence": "uncertain",
+      "description": "Supporting JSON as a configuration format.",
+      "mentions": [],
+      "notes": [],
+      "opposing_evidence": [
+        "ev-6208178d21"
+      ],
+      "proponents": [],
+      "reasons": [
+        {
+          "evidence_ids": [
+            "ev-6208178d21"
+          ],
+          "premise": null,
+          "supported": false,
+          "text": "It lacks comments, which is inconvenient for manual editing."
+        }
+      ],
+      "rejection_type": null,
+      "status": "unresolved",
+      "status_evidence": [],
+      "status_support": "unchecked",
+      "supporting_evidence": [
+        "ev-d2b79dea21"
+      ],
+      "title": "JSON configuration"
+    },
+    {
+      "alternative_id": "alt-7",
+      "confidence": "uncertain",
+      "description": "Allowing environment variables to override file settings.",
+      "mentions": [],
+      "notes": [
+        "ignored 1 status claim(s) whose quote could not be verified"
+      ],
+      "opposing_evidence": [],
+      "proponents": [],
+      "reasons": [],
+      "rejection_type": null,
+      "status": "proposed",
+      "status_evidence": [],
+      "status_support": "unchecked",
+      "supporting_evidence": [
+        "ev-efd2d293dc"
+      ],
+      "title": "Environment variables for overrides"
+    }
+  ],
+  "code_anchors": [
+    {
+      "kind": "path",
+      "note": "mentioned in q1, q10, q13",
+      "repository": null,
+      "value": "pyproject.toml"
+    },
+    {
+      "kind": "path",
+      "note": "mentioned in q7",
+      "repository": null,
+      "value": "quillfmt_config.py"
+    }
+  ],
+  "confidence": "uncertain",
+  "decided_at": null,
+  "decision_authority": null,
+  "evidence": [
+    {
+      "archive_url": null,
+      "author": null,
+      "created_at": null,
+      "end_offset": null,
+      "evidence_id": "ev-05ef5579d9",
+      "message_id": "message q13",
+      "quote": "INI is rejected because it cannot express nested overrides.",
+      "source_hash": null,
+      "source_url": null,
+      "start_offset": null,
+      "support": "unchecked",
+      "verification": "missing_message"
+    },
+    {
+      "archive_url": null,
+      "author": null,
+      "created_at": null,
+      "end_offset": null,
+      "evidence_id": "ev-244f1b90a0",
+      "message_id": "message q8",
+      "quote": "Executing user Python just to read configuration is a security risk when quillfmt runs in CI on untrusted pull requests. I am against it.",
+      "source_hash": null,
+      "source_url": null,
+      "start_offset": null,
+      "support": "unchecked",
+      "verification": "missing_message"
+    },
+    {
+      "archive_url": null,
+      "author": null,
+      "created_at": null,
+      "end_offset": null,
+      "evidence_id": "ev-2dabff11ef",
+      "message_id": "message q20",
+      "quote": "+1 from me.",
+      "source_hash": null,
+      "source_url": null,
+      "start_offset": null,
+      "support": "unchecked",
+      "verification": "missing_message"
+    },
+    {
+      "archive_url": null,
+      "author": null,
+      "created_at": null,
+      "end_offset": null,
+      "evidence_id": "ev-3a293920bc",
+      "message_id": "message q13",
+      "quote": "Decision: we will read a [tool.quillfmt] table from pyproject.toml using tomllib, with tomli on older Pythons.",
+      "source_hash": null,
+      "source_url": null,
+      "start_offset": null,
+      "support": "unchecked",
+      "verification": "missing_message"
+    },
+    {
+      "archive_url": null,
+      "author": null,
+      "created_at": null,
+      "end_offset": null,
+      "evidence_id": "ev-6162d2a45b",
+      "message_id": "message q10",
+      "quote": "tomli is a tiny backport with the same API, and we only need it on Python older than 3.11.",
+      "source_hash": null,
+      "source_url": null,
+      "start_offset": null,
+      "support": "unchecked",
+      "verification": "missing_message"
+    },
+    {
+      "archive_url": null,
+      "author": null,
+      "created_at": null,
+      "end_offset": null,
+      "evidence_id": "ev-6208178d21",
+      "message_id": "message q17",
+      "quote": "JSON has no comments, which is painful for configuration files people edit by hand.",
+      "source_hash": null,
+      "source_url": null,
+      "start_offset": null,
+      "support": "unchecked",
+      "verification": "missing_message"
+    },
+    {
+      "archive_url": null,
+      "author": null,
+      "created_at": null,
+      "end_offset": null,
+      "evidence_id": "ev-63f05934be",
+      "message_id": "message q6",
+      "quote": "INI cannot express nested tables or lists cleanly. Our per-language overrides need nesting, so INI would force awkward dotted keys.",
+      "source_hash": null,
+      "source_url": null,
+      "start_offset": null,
+      "support": "unchecked",
+      "verification": "missing_message"
+    },
+    {
+      "archive_url": null,
+      "author": null,
+      "created_at": null,
+      "end_offset": null,
+      "evidence_id": "ev-86045033d3",
+      "message_id": "message q9",
+      "quote": "I withdraw the Python config file idea.",
+      "source_hash": null,
+      "source_url": null,
+      "start_offset": null,
+      "support": "unchecked",
+      "verification": "missing_message"
+    },
+    {
+      "archive_url": null,
+      "author": null,
+      "created_at": null,
+      "end_offset": null,
+      "evidence_id": "ev-ab6a786665",
+      "message_id": "message q14",
+      "quote": "Could we also support a standalone .quillfmt.toml file for repositories that are not Python projects?",
+      "source_hash": null,
+      "source_url": null,
+      "start_offset": null,
+      "support": "unchecked",
+      "verification": "missing_message"
+    },
+    {
+      "archive_url": null,
+      "author": null,
+      "created_at": null,
+      "end_offset": null,
+      "evidence_id": "ev-b8784db3b7",
+      "message_id": "message q15",
+      "quote": "let's postpone the standalone .quillfmt.toml file until after 1.0, because it needs its own file discovery rules.",
+      "source_hash": null,
+      "source_url": null,
+      "start_offset": null,
+      "support": "unchecked",
+      "verification": "missing_message"
+    },
+    {
+      "archive_url": null,
+      "author": null,
+      "created_at": null,
+      "end_offset": null,
+      "evidence_id": "ev-d0a000b59e",
+      "message_id": "message q3",
+      "quote": "YAML worries me. Its implicit typing means a value like no silently becomes false, and we would need PyYAML as a new runtime dependency.",
+      "source_hash": null,
+      "source_url": null,
+      "start_offset": null,
+      "support": "unchecked",
+      "verification": "missing_message"
+    },
+    {
+      "archive_url": null,
+      "author": null,
+      "created_at": null,
+      "end_offset": null,
+      "evidence_id": "ev-d2b79dea21",
+      "message_id": "message q18",
+      "quote": "True, although JSON5 would fix that. I have no strong opinion.",
+      "source_hash": null,
+      "source_url": null,
+      "start_offset": null,
+      "support": "unchecked",
+      "verification": "missing_message"
+    },
+    {
+      "archive_url": null,
+      "author": null,
+      "created_at": null,
+      "end_offset": null,
+      "evidence_id": "ev-d9ab19511c",
+      "message_id": "message q13",
+      "quote": "YAML is rejected because of the implicit typing surprises and the extra dependency.",
+      "source_hash": null,
+      "source_url": null,
+      "start_offset": null,
+      "support": "unchecked",
+      "verification": "missing_message"
+    },
+    {
+      "archive_url": null,
+      "author": null,
+      "created_at": null,
+      "end_offset": null,
+      "evidence_id": "ev-e1ff7fe185",
+      "message_id": "message q5",
+      "quote": "INI through configparser is in the standard library, so it costs zero dependencies.",
+      "source_hash": null,
+      "source_url": null,
+      "start_offset": null,
+      "support": "unchecked",
+      "verification": "missing_message"
+    },
+    {
+      "archive_url": null,
+      "author": null,
+      "created_at": null,
+      "end_offset": null,
+      "evidence_id": "ev-efd2d293dc",
+      "message_id": "message q20",
+      "quote": "Environment overrides would be handy in CI.",
+      "source_hash": null,
+      "source_url": null,
+      "start_offset": null,
+      "support": "unchecked",
+      "verification": "missing_message"
+    }
+  ],
+  "id": "dec-discussion-quillfmt-which-configuration-file-format-should",
+  "metadata": {
+    "ai_extracted": true,
+    "chunks": 1,
+    "evidence_total": 15,
+    "evidence_verified": 0,
+    "extractor": "extract-v2+outcome-v1+support-v2",
+    "human_reviewed": false,
+    "messages": 20,
+    "model": "ollama:gemma4:e2b",
+    "outcome_pass_calls": 0,
+    "support_checks": 0
+  },
+  "presentation": null,
+  "question": "Which configuration file format should we support?",
+  "reasons": [],
+  "schema_version": "1.0",
+  "source_threads": [
+    "discussion"
+  ],
+  "status": "unresolved",
+  "summary": "7 alternatives recovered from 20 messages: 6 proposed, 1 unresolved.",
+  "superseded_by": [],
+  "supersedes": [],
+  "topic": "quillfmt: which configuration file format should we support?",
+  "valid_from": null,
+  "valid_until": null
+}

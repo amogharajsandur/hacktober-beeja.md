@@ -1,0 +1,226 @@
+{
+  "cases": [
+    {
+      "alternatives_extracted": 5,
+      "case": "pep-0758",
+      "evidence_total": 23,
+      "evidence_verification_rate": 0.826,
+      "evidence_verified": 19,
+      "ground_truth_items": 2,
+      "items": [
+        {
+          "alternative_id": null,
+          "extracted_status": null,
+          "id": "758-r1",
+          "in_discussion": false,
+          "reason_recovered": false,
+          "reason_supported": false,
+          "recovered": false,
+          "title": "Allow mixing parenthesized and unparenthesized exception types in one except clause",
+          "via": null,
+          "wrong_status_matches": []
+        },
+        {
+          "alternative_id": null,
+          "extracted_status": null,
+          "id": "758-d1",
+          "in_discussion": true,
+          "reason_recovered": false,
+          "reason_supported": false,
+          "recovered": false,
+          "title": "Allow unparenthesized exception lists when the 'as' clause is used",
+          "via": null,
+          "wrong_status_matches": [
+            "alt-2:unresolved"
+          ]
+        }
+      ],
+      "missed": 2,
+      "model": "ollama:gemma4:e2b",
+      "precision": null,
+      "reasons_recovered": 0,
+      "reasons_supported_by_verified_evidence": 0,
+      "recall": 0.0,
+      "recall_discussion_only": 0.0,
+      "recovered": 0,
+      "status_checks": [],
+      "unmatched_negative": [],
+      "unmatched_negative_claims": 0
+    },
+    {
+      "alternatives_extracted": 8,
+      "case": "pep-0768",
+      "evidence_total": 20,
+      "evidence_verification_rate": 0.75,
+      "evidence_verified": 15,
+      "ground_truth_items": 2,
+      "items": [
+        {
+          "alternative_id": "alt-8",
+          "extracted_status": "rejected",
+          "id": "768-r1",
+          "in_discussion": true,
+          "reason_recovered": false,
+          "reason_supported": false,
+          "recovered": true,
+          "title": "Debugger writes Python source code (instead of a path to a script file) into the remote buffer",
+          "via": "direct",
+          "wrong_status_matches": []
+        },
+        {
+          "alternative_id": null,
+          "extracted_status": null,
+          "id": "768-r2",
+          "in_discussion": true,
+          "reason_recovered": false,
+          "reason_supported": false,
+          "recovered": false,
+          "title": "Use a single shared runtime-level buffer for all debugger communication instead of per-thread buffers",
+          "via": null,
+          "wrong_status_matches": [
+            "alt-2:unresolved",
+            "alt-5:unresolved"
+          ]
+        }
+      ],
+      "missed": 1,
+      "model": "ollama:gemma4:e2b",
+      "precision": 1.0,
+      "reasons_recovered": 0,
+      "reasons_supported_by_verified_evidence": 0,
+      "recall": 0.5,
+      "recall_discussion_only": 0.5,
+      "recovered": 1,
+      "status_checks": [],
+      "unmatched_negative": [],
+      "unmatched_negative_claims": 0
+    },
+    {
+      "alternatives_extracted": 7,
+      "case": "synthetic-config-format",
+      "evidence_total": 15,
+      "evidence_verification_rate": 0.0,
+      "evidence_verified": 0,
+      "ground_truth_items": 4,
+      "items": [
+        {
+          "alternative_id": null,
+          "extracted_status": null,
+          "id": "syn-r1",
+          "in_discussion": true,
+          "reason_recovered": false,
+          "reason_supported": false,
+          "recovered": false,
+          "title": "Dedicated YAML configuration file",
+          "via": null,
+          "wrong_status_matches": [
+            "alt-2:proposed"
+          ]
+        },
+        {
+          "alternative_id": null,
+          "extracted_status": null,
+          "id": "syn-r2",
+          "in_discussion": true,
+          "reason_recovered": false,
+          "reason_supported": false,
+          "recovered": false,
+          "title": "INI file via configparser",
+          "via": null,
+          "wrong_status_matches": [
+            "alt-3:proposed"
+          ]
+        },
+        {
+          "alternative_id": null,
+          "extracted_status": null,
+          "id": "syn-w1",
+          "in_discussion": true,
+          "reason_recovered": false,
+          "reason_supported": false,
+          "recovered": false,
+          "title": "Python configuration file (quillfmt_config.py)",
+          "via": null,
+          "wrong_status_matches": [
+            "alt-4:proposed"
+          ]
+        },
+        {
+          "alternative_id": null,
+          "extracted_status": null,
+          "id": "syn-d1",
+          "in_discussion": true,
+          "reason_recovered": false,
+          "reason_supported": false,
+          "recovered": false,
+          "title": "Standalone .quillfmt.toml file",
+          "via": null,
+          "wrong_status_matches": [
+            "alt-5:proposed"
+          ]
+        }
+      ],
+      "missed": 4,
+      "model": "ollama:gemma4:e2b",
+      "precision": null,
+      "reasons_recovered": 0,
+      "reasons_supported_by_verified_evidence": 0,
+      "recall": 0.0,
+      "recall_discussion_only": 0.0,
+      "recovered": 0,
+      "status_checks": [
+        {
+          "expected": [
+            "accepted"
+          ],
+          "found": [
+            "proposed"
+          ],
+          "id": "syn-a1",
+          "ok": false
+        },
+        {
+          "expected": [
+            "unresolved",
+            "proposed"
+          ],
+          "found": [
+            "unresolved"
+          ],
+          "id": "syn-u1",
+          "ok": true
+        },
+        {
+          "expected": [
+            "unresolved",
+            "proposed"
+          ],
+          "found": [
+            "proposed"
+          ],
+          "id": "syn-u2",
+          "ok": true
+        }
+      ],
+      "unmatched_negative": [],
+      "unmatched_negative_claims": 0
+    }
+  ],
+  "missing_outputs": [],
+  "summary": {
+    "cases": 3,
+    "evidence_verification_rate": 0.586,
+    "f1": 0.222,
+    "ground_truth_items": 8,
+    "missed": 7,
+    "precision": 1.0,
+    "reasons_recovered": 0,
+    "reasons_supported_by_verified_evidence": 0,
+    "recall": 0.125,
+    "recall_discussion_only": 0.143,
+    "recovered": 1,
+    "status_checks_passed": 2,
+    "status_checks_total": 3,
+    "unmatched_negative_claims": 0
+  }
+}

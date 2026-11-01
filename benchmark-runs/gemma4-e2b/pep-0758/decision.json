@@ -1,0 +1,586 @@
+{
+  "alternatives": [
+    {
+      "alternative_id": "alt-1",
+      "confidence": "uncertain",
+      "description": "Allow unparenthesized except and except* blocks in Python’s exception handling syntax.",
+      "mentions": [],
+      "notes": [
+        "support check: cited passage does not support 'accepted' (checker read it as 'none'); outcome withheld"
+      ],
+      "opposing_evidence": [
+        "ev-c47dfb5519",
+        "ev-a33bf2ed94",
+        "ev-8499c7a6c9"
+      ],
+      "proponents": [],
+      "reasons": [
+        {
+          "evidence_ids": [
+            "ev-53f340e737"
+          ],
+          "premise": null,
+          "supported": true,
+          "text": "It’s a short, simple PEP from @pablogsal and me to make the parentheses around the tuple of exception classes in except expressions be optional."
+        },
+        {
+          "evidence_ids": [
+            "ev-94b6e9a0f6"
+          ],
+          "premise": null,
+          "supported": true,
+          "text": "It removes a quirk that is no longer necessary and wasn’t easy to explain in the first place without delving into the awkward “except type, name:” syntax."
+        },
+        {
+          "evidence_ids": [
+            "ev-d8383c7e67"
+          ],
+          "premise": null,
+          "supported": true,
+          "text": "The syntax itself should support not using parentheses, for consistency."
+        },
+        {
+          "evidence_ids": [
+            "ev-1b545a2d7f"
+          ],
+          "premise": null,
+          "supported": true,
+          "text": "Lightening up the syntax requirement would alleviate that."
+        },
+        {
+          "evidence_ids": [
+            "ev-a8699d858c"
+          ],
+          "premise": null,
+          "supported": true,
+          "text": "Dropping parentheses is preferred because there is only one sensible interpretation if parentheses are omitted."
+        }
+      ],
+      "rejection_type": null,
+      "status": "unresolved",
+      "status_evidence": [
+        "ev-68afbb168a"
+      ],
+      "status_support": "does_not_support",
+      "supporting_evidence": [
+        "ev-53f340e737",
+        "ev-94b6e9a0f6",
+        "ev-d8383c7e67",
+        "ev-1b545a2d7f",
+        "ev-a8699d858c"
+      ],
+      "title": "Allow unparenthesized except and except* expressions"
+    },
+    {
+      "alternative_id": "alt-2",
+      "confidence": "uncertain",
+      "description": "Keep parentheses mandatory if there are multiple exceptions and 'as' is used.",
+      "mentions": [],
+      "notes": [
+        "support check: cited passage does not support 'accepted' (checker read it as 'none'); outcome withheld"
+      ],
+      "opposing_evidence": [],
+      "proponents": [],
+      "reasons": [
+        {
+          "evidence_ids": [
+            "ev-8239d04f36"
+          ],
+          "premise": null,
+          "supported": true,
+          "text": "Maybe the parentheses can stay mandatory if there are multiple exceptions and ‘as’ is used?"
+        },
+        {
+          "evidence_ids": [
+            "ev-de427f0516"
+          ],
+          "premise": null,
+          "supported": true,
+          "text": "I think this would be a reasonable addition to PEP 8 (recommending the use of parentheses when multiple exception types are caught and bound to a common name) for the reasons given (as refers to the entire tuple of matched types here, not just the last element), but I don’t think it’s necessary to keep the distinction in the compiler."
+        },
+        {
+          "evidence_ids": [
+            "ev-46d6dcad4b"
+          ],
+          "premise": null,
+          "supported": true,
+          "text": "Keep parentheses mandatory if there are multiple exceptions and 'as' is used."
+        },
+        {
+          "evidence_ids": [
+            "ev-b5286abe9f"
+          ],
+          "premise": null,
+          "supported": true,
+          "text": "Personally for readability I might keep using parenthesis in case I have multiple exceptions to catch and I need to bind one of them to a variable."
+        },
+        {
+          "evidence_ids": [
+            "ev-6b317987fd"
+          ],
+          "premise": null,
+          "supported": true,
+          "text": "Keeping parentheses mandatory when 'as' is used provides clarity."
+        },
+        {
+          "evidence_ids": [
+            "ev-595f69959f"
+          ],
+          "premise": null,
+          "supported": true,
+          "text": "Parentheses are kept mandatory when 'as' is used to avoid ambiguity."
+        }
+      ],
+      "rejection_type": null,
+      "status": "unresolved",
+      "status_evidence": [
+        "ev-a33bf2ed94"
+      ],
+      "status_support": "does_not_support",
+      "supporting_evidence": [
+        "ev-8239d04f36",
+        "ev-de427f0516",
+        "ev-46d6dcad4b",
+        "ev-b5286abe9f",
+        "ev-6b317987fd",
+        "ev-595f69959f"
+      ],
+      "title": "Allow `except` and `except*` expressions with parentheses when 'as' is used"
+    },
+    {
+      "alternative_id": "alt-3",
+      "confidence": "uncertain",
+      "description": "Allow combining exceptions using the bitwise OR operator (|) in an except clause.",
+      "mentions": [],
+      "notes": [
+        "ignored 1 status claim(s) whose quote could not be verified"
+      ],
+      "opposing_evidence": [
+        "ev-a2029d0068"
+      ],
+      "proponents": [],
+      "reasons": [
+        {
+          "evidence_ids": [
+            "ev-a2029d0068"
+          ],
+          "premise": null,
+          "supported": true,
+          "text": "This is technically backwards incompatible with existing exception handling."
+        }
+      ],
+      "rejection_type": null,
+      "status": "unresolved",
+      "status_evidence": [],
+      "status_support": "unchecked",
+      "supporting_evidence": [
+        "ev-18ac57685f"
+      ],
+      "title": "Allow combining exceptions using bitwise OR operator (|)"
+    },
+    {
+      "alternative_id": "alt-4",
+      "confidence": "uncertain",
+      "description": "Allow nested tuples in except clauses.",
+      "mentions": [],
+      "notes": [
+        "ignored 1 status claim(s) whose quote could not be verified"
+      ],
+      "opposing_evidence": [
+        "ev-a65119e641"
+      ],
+      "proponents": [],
+      "reasons": [
+        {
+          "evidence_ids": [
+            "ev-a65119e641"
+          ],
+          "premise": null,
+          "supported": true,
+          "text": "Nested tuples are not supported for the `except` clause."
+        }
+      ],
+      "rejection_type": null,
+      "status": "unresolved",
+      "status_evidence": [],
+      "status_support": "unchecked",
+      "supporting_evidence": [
+        "ev-6085a4a389"
+      ],
+      "title": "Allow exception handling with nested tuples in except clauses"
+    },
+    {
+      "alternative_id": "alt-5",
+      "confidence": "uncertain",
+      "description": "Allow combining exceptions using the pipe operator (|) in an except clause.",
+      "mentions": [],
+      "notes": [],
+      "opposing_evidence": [],
+      "proponents": [],
+      "reasons": [],
+      "rejection_type": null,
+      "status": "unresolved",
+      "status_evidence": [],
+      "status_support": "unchecked",
+      "supporting_evidence": [
+        "ev-435be90b9a"
+      ],
+      "title": "Allow exception handling using the pipe operator (|) for exception combination"
+    }
+  ],
+  "code_anchors": [],
+  "confidence": "uncertain",
+  "decided_at": null,
+  "decision_authority": null,
+  "evidence": [
+    {
+      "archive_url": null,
+      "author": "Brett Cannon",
+      "created_at": "2024-10-02T22:59:18.335Z",
+      "end_offset": 504,
+      "evidence_id": "ev-53f340e737",
+      "message_id": "post-1",
+      "quote": "It’s a short, simple PEP from @pablogsal and me to make the parentheses around the tuple of exception classes in except expressions be optional.",
+      "source_hash": "sha256:516b3e516a39c2a6df299cfab599b9830c1511c0074318540e1ba0539a3652cc",
+      "source_url": "https://discuss.python.org/t/pep-758-allow-except-and-except-expressions-without-parentheses/66453/1",
+      "start_offset": 361,
+      "support": "unchecked",
+      "verification": "exact"
+    },
+    {
+      "archive_url": null,
+      "author": "Chris Angelico",
+      "created_at": "2024-10-02T23:03:31.703Z",
+      "end_offset": 165,
+      "evidence_id": "ev-94b6e9a0f6",
+      "message_id": "post-2",
+      "quote": "It removes a quirk that is no longer necessary and wasn’t easy to explain in the first place without delving into the awkward “except type, name:” syntax.",
+      "source_hash": "sha256:aac73ad6af81348d239d776ffc9ab586cc212765e70fa8e82fac9291cb108203",
+      "source_url": "https://discuss.python.org/t/pep-758-allow-except-and-except-expressions-without-parentheses/66453/2",
+      "start_offset": 12,
+      "support": "unchecked",
+      "verification": "exact"
+    },
+    {
+      "archive_url": null,
+      "author": "Joseph Martinot-Lagarde",
+      "created_at": "2024-10-03T00:21:04.069Z",
+      "end_offset": 91,
+      "evidence_id": "ev-8239d04f36",
+      "message_id": "post-8",
+      "quote": "Maybe the parentheses can stay mandatory if there are multiple exceptions and ‘as’ is used?",
+      "source_hash": "sha256:ba9fe901985e1590cdc061d40c636cb45b4b0caf525bc231145bbd800d3659a0",
+      "source_url": "https://discuss.python.org/t/pep-758-allow-except-and-except-expressions-without-parentheses/66453/8",
+      "start_offset": 0,
+      "support": "unchecked",
+      "verification": "exact"
+    },
+    {
+      "archive_url": null,
+      "author": "Alyssa Coghlan",
+      "created_at": "2024-10-03T10:56:56.109Z",
+      "end_offset": 539,
+      "evidence_id": "ev-de427f0516",
+      "message_id": "post-13",
+      "quote": "I think this would be a reasonable addition to PEP 8 (recommending the use of parentheses when multiple exception types are caught and bound to a common name) for the reasons given (as refers to the entire tuple of matched types here, not just the last element), but I don’t think it’s necessary to keep the distinction in the compiler.",
+      "source_hash": "sha256:60bc199edabb3557167d3572b84ae9cc0d08ab517bb8f425d2ae41778de758ca",
+      "source_url": "https://discuss.python.org/t/pep-758-allow-except-and-except-expressions-without-parentheses/66453/13",
+      "start_offset": 204,
+      "support": "unchecked",
+      "verification": "exact"
+    },
+    {
+      "archive_url": null,
+      "author": "Diego Russo",
+      "created_at": "2024-10-03T11:01:57.671Z",
+      "end_offset": 343,
+      "evidence_id": "ev-46d6dcad4b",
+      "message_id": "post-14",
+      "quote": "I think it is the comma the causes issues because its meaning is like an OR (like the case in the match statement).",
+      "source_hash": "sha256:ed4c469b91282cd2a3a7d975c88a6631656bebb98078f3762e47f5f63d8dcad5",
+      "source_url": "https://discuss.python.org/t/pep-758-allow-except-and-except-expressions-without-parentheses/66453/14",
+      "start_offset": 229,
+      "support": "unchecked",
+      "verification": "exact"
+    },
+    {
+      "archive_url": null,
+      "author": "Diego Russo",
+      "created_at": "2024-10-03T11:01:57.671Z",
+      "end_offset": 1078,
+      "evidence_id": "ev-b5286abe9f",
+      "message_id": "post-14",
+      "quote": "Personally for readability I might keep using parenthesis in case I have multiple exceptions to catch and I need to bind one of them to a variable.",
+      "source_hash": "sha256:ed4c469b91282cd2a3a7d975c88a6631656bebb98078f3762e47f5f63d8dcad5",
+      "source_url": "https://discuss.python.org/t/pep-758-allow-except-and-except-expressions-without-parentheses/66453/14",
+      "start_offset": 932,
+      "support": "unchecked",
+      "verification": "exact"
+    },
+    {
+      "archive_url": null,
+      "author": "Pablo Galindo Salgado",
+      "created_at": "2024-10-07T12:25:41.575Z",
+      "end_offset": 117,
+      "evidence_id": "ev-19a0fd1e0c",
+      "message_id": "post-24",
+      "quote": "Please vote in this friendly non-binding poll about your preference regarding parentheses when using the “as” keyword:",
+      "source_hash": "sha256:86cf497ea4035f0c14b16f606b965e914de5c3d0efff3606e0c352283e781a8c",
+      "source_url": "https://discuss.python.org/t/pep-758-allow-except-and-except-expressions-without-parentheses/66453/24",
+      "start_offset": 0,
+      "support": "unchecked",
+      "verification": "exact"
+    },
+    {
+      "archive_url": null,
+      "author": "Cornelius Krupp",
+      "created_at": "2024-10-07T12:37:18.660Z",
+      "end_offset": 255,
+      "evidence_id": "ev-d8383c7e67",
+      "message_id": "post-25",
+      "quote": "My position is that the syntax itself should support not using parentheses, for consistency, but style guides (including PEP 8) and linters should strongly encourage using them, and I would also like the PEP to talk about this potential point of confusion.",
+      "source_hash": "sha256:98613ceb74fb7948248aa175e18ea20af054a128599d492da670b8d1e201ec17",
+      "source_url": "https://discuss.python.org/t/pep-758-allow-except-and-except-expressions-without-parentheses/66453/25",
+      "start_offset": 0,
+      "support": "unchecked",
+      "verification": "exact"
+    },
+    {
+      "archive_url": null,
+      "author": "Gregory P. Smith",
+      "created_at": "2024-10-07T20:11:35.777Z",
+      "end_offset": 786,
+      "evidence_id": "ev-1b545a2d7f",
+      "message_id": "post-28",
+      "quote": "Lightening up the syntax requirement would alleviate that.",
+      "source_hash": "sha256:f34c848af4a2422ae7ba5b34d24e6c6dc869ba4ba87a00d78b46b20d21026141",
+      "source_url": "https://discuss.python.org/t/pep-758-allow-except-and-except-expressions-without-parentheses/66453/28",
+      "start_offset": 729,
+      "support": "unchecked",
+      "verification": "exact"
+    },
+    {
+      "archive_url": null,
+      "author": "Gregory P. Smith",
+      "created_at": "2024-10-07T20:11:35.777Z",
+      "end_offset": 418,
+      "evidence_id": "ev-c47dfb5519",
+      "message_id": "post-28",
+      "quote": "Making except ValueError, CustomError as exc: not require parenthesis around the list of Error classes makes the binding behavior of as inconsistent in different areas of the language so that it requires more context to understand.",
+      "source_hash": "sha256:f34c848af4a2422ae7ba5b34d24e6c6dc869ba4ba87a00d78b46b20d21026141",
+      "source_url": "https://discuss.python.org/t/pep-758-allow-except-and-except-expressions-without-parentheses/66453/28",
+      "start_offset": 188,
+      "support": "unchecked",
+      "verification": "exact"
+    },
+    {
+      "archive_url": null,
+      "author": "Petr Viktorin",
+      "created_at": "2024-10-08T09:01:43.816Z",
+      "end_offset": 637,
+      "evidence_id": "ev-a65119e641",
+      "message_id": "post-37",
+      "quote": "except doesn’t accept nested tuples.",
+      "source_hash": "sha256:bd278ad67ba1881cc29f5f307d0ee1a6c74c18bd8c28a284f390f933eb18f61f",
+      "source_url": "https://discuss.python.org/t/pep-758-allow-except-and-except-expressions-without-parentheses/66453/37",
+      "start_offset": 602,
+      "support": "unchecked",
+      "verification": "exact"
+    },
+    {
+      "archive_url": null,
+      "author": "Jelle Zijlstra",
+      "created_at": "2024-10-08T15:41:28.039Z",
+      "end_offset": null,
+      "evidence_id": "ev-6085a4a389",
+      "message_id": "post-39",
+      "quote": "Nested tuples do work with isinstance(), but not for except:",
+      "source_hash": "sha256:68e448206e53cf2a4e0a031b1b987382510e074f4eebad2ea8d34832ce5c9e47",
+      "source_url": "https://discuss.python.org/t/pep-758-allow-except-and-except-expressions-without-parentheses/66453/39",
+      "start_offset": null,
+      "support": "unchecked",
+      "verification": "not_found"
+    },
+    {
+      "archive_url": null,
+      "author": null,
+      "created_at": "2024-10-09T01:16:45.821Z",
+      "end_offset": 196,
+      "evidence_id": "ev-18ac57685f",
+      "message_id": "post-49",
+      "quote": "So if we want to be consistent with the syntax, maybe we should be considering something like try: ... except ExceptionA | ExceptionB | ExceptionC as e:",
+      "source_hash": "sha256:2af50b940839d769b48d7f0dad65df05ab5057f583e85f4ce3816e8601f4d9b5",
+      "source_url": "https://discuss.python.org/t/pep-758-allow-except-and-except-expressions-without-parentheses/66453/49",
+      "start_offset": 34,
+      "support": "unchecked",
+      "verification": "exact"
+    },
+    {
+      "archive_url": null,
+      "author": null,
+      "created_at": "2024-10-09T01:16:45.821Z",
+      "end_offset": 741,
+      "evidence_id": "ev-435be90b9a",
+      "message_id": "post-49",
+      "quote": "Personally I don’t think it’s necessary, but it would be a potential way forward if the comma bothers people.",
+      "source_hash": "sha256:2af50b940839d769b48d7f0dad65df05ab5057f583e85f4ce3816e8601f4d9b5",
+      "source_url": "https://discuss.python.org/t/pep-758-allow-except-and-except-expressions-without-parentheses/66453/49",
+      "start_offset": 633,
+      "support": "unchecked",
+      "verification": "exact"
+    },
+    {
+      "archive_url": null,
+      "author": "Jelle Zijlstra",
+      "created_at": "2024-10-09T01:49:31.780Z",
+      "end_offset": 99,
+      "evidence_id": "ev-a2029d0068",
+      "message_id": "post-50",
+      "quote": "This is technically backwards incompatible (though I’d be mildly surprised if anyone ever did this):",
+      "source_hash": "sha256:72ac622724f4164206e7843eaba0f9e146ce69fe21fb882a1823ace30bf729ca",
+      "source_url": "https://discuss.python.org/t/pep-758-allow-except-and-except-expressions-without-parentheses/66453/50",
+      "start_offset": 0,
+      "support": "unchecked",
+      "verification": "exact"
+    },
+    {
+      "archive_url": null,
+      "author": "Jan Kaliszewski",
+      "created_at": "2024-10-09T02:09:52.830Z",
+      "end_offset": null,
+      "evidence_id": "ev-4baee25195",
+      "message_id": "post-51",
+      "quote": "unresolved",
+      "source_hash": "sha256:bfd3cd286a689fef79b4fae14d30fe1bb76ddaea312af17f42ef15f2eef8e636",
+      "source_url": "https://discuss.python.org/t/pep-758-allow-except-and-except-expressions-without-parentheses/66453/51",
+      "start_offset": null,
+      "support": "unchecked",
+      "verification": "not_found"
+    },
+    {
+      "archive_url": null,
+      "author": "Pablo Galindo Salgado",
+      "created_at": "2024-10-19T15:25:40.112Z",
+      "end_offset": 462,
+      "evidence_id": "ev-6b317987fd",
+      "message_id": "post-56",
+      "quote": "we have opted for keeping the parentheses requirement for as since it can be removed later if people find the disconnect too much, while taking it out and people deciding it was a bad idea doesn’t make it easy to put back.",
+      "source_hash": "sha256:b47f47690fac59c3a5916ae6c87d931e923cd3b146a78416b3bc2251f697a1a0",
+      "source_url": "https://discuss.python.org/t/pep-758-allow-except-and-except-expressions-without-parentheses/66453/56",
+      "start_offset": 241,
+      "support": "unchecked",
+      "verification": "exact"
+    },
+    {
+      "archive_url": null,
+      "author": "Pablo Galindo Salgado",
+      "created_at": "2024-10-19T15:25:40.112Z",
+      "end_offset": 148,
+      "evidence_id": "ev-a33bf2ed94",
+      "message_id": "post-56",
+      "quote": "After discussing and evaluating the results of the poll, we have decided to modify PEP 758 to always require parentheses when using the “as” keyword.",
+      "source_hash": "sha256:b47f47690fac59c3a5916ae6c87d931e923cd3b146a78416b3bc2251f697a1a0",
+      "source_url": "https://discuss.python.org/t/pep-758-allow-except-and-except-expressions-without-parentheses/66453/56",
+      "start_offset": 0,
+      "support": "does_not_support",
+      "verification": "exact"
+    },
+    {
+      "archive_url": null,
+      "author": "Guido van Rossum",
+      "created_at": "2025-03-04T20:31:14.421Z",
+      "end_offset": 240,
+      "evidence_id": "ev-595f69959f",
+      "message_id": "post-60",
+      "quote": "if you’re not sure how as binds here relative to a comma, you can always add the parentheses if that makes you more comfortable.",
+      "source_hash": "sha256:cd1e7c20339712c8194288e07ffd9fc0d75379a9d0f936339effbc7bdc219189",
+      "source_url": "https://discuss.python.org/t/pep-758-allow-except-and-except-expressions-without-parentheses/66453/60",
+      "start_offset": 113,
+      "support": "unchecked",
+      "verification": "exact"
+    },
+    {
+      "archive_url": null,
+      "author": "Guido van Rossum",
+      "created_at": "2025-03-04T20:31:14.421Z",
+      "end_offset": null,
+      "evidence_id": "ev-8499c7a6c9",
+      "message_id": "post-60",
+      "quote": "But even if you do parenthesize, it looks a bit as if you’re assigning a tuple to the as variable, which is not what’s happening, so could also be considered slightly confusing.",
+      "source_hash": "sha256:cd1e7c20339712c8194288e07ffd9fc0d75379a9d0f936339effbc7bdc219189",
+      "source_url": "https://discuss.python.org/t/pep-758-allow-except-and-except-expressions-without-parentheses/66453/60",
+      "start_offset": null,
+      "support": "unchecked",
+      "verification": "not_found"
+    },
+    {
+      "archive_url": null,
+      "author": "Guido van Rossum",
+      "created_at": "2025-03-04T20:31:14.421Z",
+      "end_offset": 499,
+      "evidence_id": "ev-a8699d858c",
+      "message_id": "post-60",
+      "quote": "OTOH if you think a bit about the semantics, you will see that there is only one sensible interpretation if the parentheses are omitted – except A as a, B as b: just doesn’t make sense (how would you know whether A or B occurred without using a try/except?).",
+      "source_hash": "sha256:cd1e7c20339712c8194288e07ffd9fc0d75379a9d0f936339effbc7bdc219189",
+      "source_url": "https://discuss.python.org/t/pep-758-allow-except-and-except-expressions-without-parentheses/66453/60",
+      "start_offset": 242,
+      "support": "unchecked",
+      "verification": "exact"
+    },
+    {
+      "archive_url": null,
+      "author": "Gregory P. Smith",
+      "created_at": "2025-03-14T20:51:34.531Z",
+      "end_offset": 68,
+      "evidence_id": "ev-68afbb168a",
+      "message_id": "post-63",
+      "quote": "The Python Steering Council discussed and chosen to Accept this PEP!",
+      "source_hash": "sha256:e7232eaa57a416913d867fd59a04594e35cc41c18260440d2376c692df79a750",
+      "source_url": "https://discuss.python.org/t/pep-758-allow-except-and-except-expressions-without-parentheses/66453/63",
+      "start_offset": 0,
+      "support": "does_not_support",
+      "verification": "exact"
+    },
+    {
+      "archive_url": null,
+      "author": null,
+      "created_at": null,
+      "end_offset": null,
+      "evidence_id": "ev-0d4f8739cf",
+      "message_id": "",
+      "quote": "unresolved",
+      "source_hash": null,
+      "source_url": null,
+      "start_offset": null,
+      "support": "unchecked",
+      "verification": "missing_message"
+    }
+  ],
+  "id": "dec-66453-pep-758-allow-except-and-except-expressions-with",
+  "metadata": {
+    "ai_extracted": true,
+    "chunks": 5,
+    "evidence_total": 23,
+    "evidence_verified": 19,
+    "extractor": "extract-v2+outcome-v1+support-v2",
+    "human_reviewed": false,
+    "messages": 52,
+    "model": "ollama:gemma4:e2b",
+    "outcome_pass_calls": 3,
+    "support_checks": 2
+  },
+  "presentation": null,
+  "question": "Allow `except` and `except*` expressions without parentheses?",
+  "reasons": [],
+  "schema_version": "1.0",
+  "source_threads": [
+    "https://discuss.python.org/t/pep-758-allow-except-and-except-expressions-without-parentheses/66453"
+  ],
+  "status": "unresolved",
+  "summary": "5 alternatives recovered from 52 messages: 5 unresolved.",
+  "superseded_by": [],
+  "supersedes": [],
+  "topic": "PEP 758: Allow `except` and `except*` expressions without parentheses",
+  "valid_from": null,
+  "valid_until": null
+}
