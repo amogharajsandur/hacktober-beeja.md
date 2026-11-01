@@ -24,8 +24,9 @@ from typing import Any
 from urllib.parse import unquote, urlsplit
 
 from . import importer
-from .github import GitHubError, parse_url, token_from_env
+from .github import token_from_env
 from .model_adapter import ModelError, load_dotenv, provider_from_env
+from .sources import SourceError, resolve
 
 MAX_BODY = 16_384
 
@@ -42,7 +43,7 @@ class Jobs:
             return json.loads(json.dumps(j)) if j else None
 
 
-def make_handler(root: Path, static: Path, jobs: Jobs, import_fn=importer.import_github):
+def make_handler(root: Path, static: Path, jobs: Jobs, import_fn=importer.import_url):
     data_dir = root / "web" / "public" / "data"
 
     class Handler(BaseHTTPRequestHandler):
@@ -107,25 +108,26 @@ def make_handler(root: Path, static: Path, jobs: Jobs, import_fn=importer.import
             try:
                 req = json.loads(self.rfile.read(n) or b"{}")
                 url, reimport = str(req.get("url", "")), bool(req.get("reimport", False))
-                ref = parse_url(url)
+                src = resolve(url)
             except (ValueError, AttributeError):
                 self._json(400, {"error": "Body must be JSON: {\"url\": \"...\"}", "kind": "invalid_request"})
                 return
-            except GitHubError as exc:
+            except SourceError as exc:
                 self._json(400, {"error": str(exc), "kind": exc.kind})
                 return
-            prev = importer.existing(root, ref.case)
+            key = src.case or src.url  # a PEP's thread is only known after a lookup; the job checks it
+            prev = importer.existing(root, src.case) if src.case else None
             if prev and not reimport:
                 self._json(409, {"error": f"Already imported as {prev}.", "kind": "exists", "decision_id": prev})
                 return
             with jobs.lock:
-                if ref.case in jobs.active_cases:
+                if key in jobs.active_cases:
                     self._json(409, {"error": "This thread is being imported right now.", "kind": "running"})
                     return
                 jid = uuid.uuid4().hex[:12]
-                jobs.jobs[jid] = {"id": jid, "url": ref.html_url, "state": "running", "progress": []}
-                jobs.active_cases.add(ref.case)
-            threading.Thread(target=run_job, args=(jobs, jid, ref.case, url, reimport, root, import_fn),
+                jobs.jobs[jid] = {"id": jid, "url": src.url, "state": "running", "progress": []}
+                jobs.active_cases.add(key)
+            threading.Thread(target=run_job, args=(jobs, jid, key, url, reimport, root, import_fn),
                              daemon=True).start()
             self._json(202, {"job": jid})
 

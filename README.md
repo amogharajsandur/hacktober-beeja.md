@@ -48,14 +48,25 @@ make extract FILE=benchmarks/pep-0758/input/discourse_topic.json
 
 ---
 
-## 🔗 Import any GitHub issue or PR from the viewer
+## 🔗 Import a PEP, a forum thread or a GitHub issue from the viewer
 
 ```bash
 make viewer      # ONE command: builds the viewer and starts it at http://127.0.0.1:8765
 ```
 
-Paste a GitHub issue or pull-request URL into **Import a GitHub issue or pull request** and press
-**Import**. Beeja fetches the thread, runs the model configured in `.env`, verifies every quote,
+Paste any of these into **Import a discussion** and press **Import**:
+
+| paste | what Beeja imports |
+|---|---|
+| `https://peps.python.org/pep-0758/` or just `PEP 758` | the PEP's **discussion thread** on discuss.python.org, found from the PEP's `Discussions-To` / `Post-History` headers. Only the header is read; the PEP text (with its Rejected Ideas) is never given to the model, matching the P6 evaluation. |
+| `https://discuss.python.org/t/<slug>/<id>` or any Discourse forum thread | all posts, with reply links and authors |
+| `https://github.com/<owner>/<repo>/issues/<n>` or `…/pull/<n>` | description, all comments, PR reviews and review threads |
+
+The same thread pasted as a PEP or as a thread URL is recognised as the same import. If an import
+would produce the same ID as an existing record it doesn't own (e.g. a bundled example), it gets
+an `-import` suffix instead of overwriting it.
+
+ Beeja fetches the thread, runs the model configured in `.env`, verifies every quote,
 saves the record and opens the dossier. No API calls, JSON or folders to manage by hand.
 
 ```mermaid
@@ -76,11 +87,11 @@ sequenceDiagram
 
 | what | behaviour |
 |---|---|
-| **Fetched** | title, description, every issue comment (all pages); for PRs also review submissions with text and inline review comments (with reply links). Not fetched: reactions, edit history, commits/diffs. |
+| **Fetched (GitHub)** | title, description, every issue comment (all pages); for PRs also review submissions with text and inline review comments (with reply links). Not fetched: reactions, edit history, commits/diffs. |
 | **Stored** | `imports/<case>/` (input, recorded model exchanges, record) and `decisions/<id>.json`, the same store the CLI and MCP read. |
 | **Viewer data** | always regenerated from `examples/` **and** `imports/`, so restarting never drops an import. |
 | **Repeat import** | refused with "Already imported → Open / Re-import". Re-import moves the previous version to `imports/<case>/history/<time>/`; nothing is overwritten. |
-| **Errors** | invalid URL, not found / private, GitHub rate limit, network, empty thread, model not configured or unreachable, model failure. Each is shown with a hint, and success is reported only after the record and viewer data exist. |
+| **Errors** | unsupported URL, PEP discussed only on a mailing list, not found / private, GitHub rate limit, network, empty thread, model not configured or unreachable, model failure. Each is shown with a hint, and success is reported only after the record and viewer data exist. |
 | **Parallel** | each import runs in its own thread, so you can keep browsing (or start another import) while one runs. |
 | **GitHub auth** | public repos need none (60 requests/hour). For more, or for private repos, set `GITHUB_TOKEN` in `.env`, or just be logged in with `gh auth login`. The token is only sent to api.github.com; it never reaches the browser, logs or generated files. |
 
