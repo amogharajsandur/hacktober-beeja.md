@@ -1,4 +1,4 @@
-"""One-step import: GitHub issue/PR URL -> discussion -> extraction -> store -> viewer data.
+"""One-step import: GitHub issue/PR, Discourse thread or Python PEP URL -> discussion -> extraction -> store -> viewer data.
 
 Layout (all relative to the project root):
 
@@ -26,7 +26,7 @@ from typing import Any, Callable
 
 from . import storage
 from .export import export_web
-from .github import GitHubClient, GitHubError, fetch_discussion, parse_url, token_from_env
+from .github import GitHubClient
 from .ingest import load_discussion
 from .model_adapter import ModelError, ModelProvider, RecordingProvider, load_dotenv, provider_from_env
 from .schema import check_integrity
@@ -58,7 +58,12 @@ def existing(root: Path, case: str) -> str | None:
     return None
 
 
-def import_github(
+def import_github(url: str, **kw: Any) -> dict[str, Any]:
+    """Backwards-compatible name; any supported URL works."""
+    return import_url(url, **kw)
+
+
+def import_url(
     url: str,
     *,
     root: Path = Path("."),
@@ -71,30 +76,34 @@ def import_github(
 
     root = Path(root)
     load_dotenv(root / ".env")
+    from . import sources
+
     try:
-        ref = parse_url(url)
-    except GitHubError as exc:
+        src = sources.resolve(url)
+        src = sources.locate(src, progress)
+    except sources.SourceError as exc:
         raise ImportError_(str(exc), exc.kind) from exc
-    case_dir = root / "imports" / ref.case
-    prev = existing(root, ref.case)
+    case_dir = root / "imports" / src.case
+    prev = existing(root, src.case)
     if prev and not reimport:
-        raise ImportError_(f"{ref.html_url} was already imported as {prev}. Open it, or re-import to "
+        raise ImportError_(f"{src.url} was already imported as {prev}. Open it, or re-import to "
                            "replace it (the current version is kept in history).", "exists", decision_id=prev)
 
-    progress(f"Fetching {ref.html_url} from GitHub…")
-    gh = gh or GitHubClient(token_from_env())
+    progress(f"Fetching {src.url}…")
     try:
-        data = fetch_discussion(ref, gh)
-    except GitHubError as exc:
+        data = sources.fetch(src, gh=gh, progress=progress)
+    except sources.SourceError as exc:
         raise ImportError_(str(exc), exc.kind) from exc
-    gh_meta = data["metadata"]["github"]
-    progress(f"Fetched {len(data['messages'])} messages ({gh.requests} GitHub requests, "
-             f"{'authenticated' if gh.authenticated else 'anonymous'}).")
+    if src.kind == "github":
+        gh_meta = data["metadata"]["github"]
+        source_meta = {"github": {k: gh_meta[k] for k in ("owner", "repo", "kind", "number", "state", "omitted")}}
+    else:
+        source_meta = {"discourse": {"url": src.url, **{k: v for k, v in src.detail.items() if k in ("pep", "pep_title")}}}
 
     staging = case_dir / ".staging"
     shutil.rmtree(staging, ignore_errors=True)
     (staging / "input").mkdir(parents=True)
-    rel_input = Path("imports") / ref.case / "input" / "discussion.json"
+    rel_input = Path("imports") / src.case / "input" / "discussion.json"
     (staging / "input" / "discussion.json").write_text(json.dumps(data, indent=1, ensure_ascii=False) + "\n")
     try:
         discussion = load_discussion(staging / "input" / "discussion.json")
@@ -118,7 +127,11 @@ def import_github(
     if problems:
         shutil.rmtree(staging, ignore_errors=True)
         raise ImportError_("Extracted record failed validation: " + "; ".join(problems), "invalid")
-    record.metadata["github"] = {k: gh_meta[k] for k in ("owner", "repo", "kind", "number", "state", "omitted")}
+    record.metadata.update(source_meta)
+    # never replace a record this import does not own (e.g. a bundled example of the same thread)
+    owned = {prev} if prev else set()
+    if (root / "decisions" / f"{record.id}.json").is_file() and record.id not in owned:
+        record.id = f"{record.id[:100]}-import"
     record.metadata["imported_at"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     (staging / "decision.json").write_text(storage.dumps(record), encoding="utf-8")
     (staging / "input_path.txt").write_text(rel_input.as_posix() + "\n")
@@ -147,7 +160,7 @@ def import_github(
         counts[a.status] = counts.get(a.status, 0) + 1
     progress(f"Saved {record.id}: {record.summary}")
     return {
-        "decision_id": record.id, "case": ref.case, "url": ref.html_url, "summary": record.summary,
+        "decision_id": record.id, "case": src.case, "url": src.url, "label": src.label, "summary": record.summary,
         "status": record.status, "counts": counts, "messages": len(discussion.messages),
         "evidence_verified": record.metadata.get("evidence_verified"),
         "evidence_total": record.metadata.get("evidence_total"),

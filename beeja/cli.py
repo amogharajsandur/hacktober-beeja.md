@@ -276,7 +276,7 @@ def cmd_providers(args: argparse.Namespace) -> int:
 
 def cmd_import(args: argparse.Namespace) -> int:
     from . import term
-    from .importer import ImportError_, import_github
+    from .importer import ImportError_, import_url
 
     st = term.style(sys.stderr)
 
@@ -285,7 +285,7 @@ def cmd_import(args: argparse.Namespace) -> int:
             print(st("◆ beeja ", "bcyan", "bold") + msg, file=sys.stderr)
 
     try:
-        res = import_github(args.url, root=Path(args.root), reimport=args.reimport, progress=progress)
+        res = import_url(args.url, root=Path(args.root), reimport=args.reimport, progress=progress)
     except ImportError_ as exc:
         if args.json:
             _print_json({"ok": False, "error": str(exc), "kind": exc.kind, **exc.extra})
@@ -320,7 +320,7 @@ def cmd_serve(args: argparse.Namespace) -> int:
     print(st.kv("model", info["model"] or st(info["model_error"] or "not configured", "yellow")))
     print(st.kv("GitHub", "token found" if info["github_auth"] else "anonymous (60 requests/hour)"))
     print(st.kv("store", str(root / "decisions")))
-    print("\n  Paste a GitHub issue or PR URL in the viewer to import it. Ctrl+C to stop.\n")
+    print("\n  Paste a PEP, Discourse thread or GitHub issue/PR URL in the viewer to import it. Ctrl+C to stop.\n")
     if args.open:
         webbrowser.open(url)
     try:
@@ -423,7 +423,7 @@ def build_parser() -> argparse.ArgumentParser:
     pv.add_argument("--json", action="store_true")
     pv.set_defaults(func=cmd_providers)
 
-    im = sub.add_parser("import", help="import a GitHub issue/PR URL: fetch, extract, store, update the viewer")
+    im = sub.add_parser("import", help="import a PEP, Discourse thread or GitHub issue/PR URL end to end")
     im.add_argument("url")
     im.add_argument("--reimport", action="store_true", help="replace an earlier import (old version kept in history)")
     im.add_argument("--root", default=".", help="project root (default: current directory)")

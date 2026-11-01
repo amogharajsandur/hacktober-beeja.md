@@ -120,7 +120,8 @@ type Job = {
 type Status = { imports: boolean; model: string | null; model_error: string | null; github_auth: boolean };
 
 const HINTS: Record<string, string> = {
-  invalid_url: "Use a link like https://github.com/owner/repo/issues/123 or …/pull/123.",
+  invalid_url: "Paste a PEP (https://peps.python.org/pep-0758/ or “PEP 758”), a Discourse thread, or a GitHub issue/PR URL.",
+  no_discussion: "This PEP was discussed on a mailing list, which is not supported — paste its discuss.python.org thread URL if there is one.",
   not_found: "Check the number, or set GITHUB_TOKEN in .env for private repositories.",
   rate_limited: "Add GITHUB_TOKEN to .env (or run `gh auth login`), restart `make viewer`, and retry.",
   network: "Check your internet connection.",
@@ -177,17 +178,17 @@ function ImportPanel({ onImported }: { onImported: () => void }) {
   if (status === "offline")
     return (
       <div className="card importer off">
-        <strong>Import from GitHub</strong>
+        <strong>Import a discussion</strong>
         <p className="fine">
-          This copy of the viewer is static. Start it with <code>make viewer</code> to paste a GitHub issue or PR URL
-          and import it here.
+          This copy of the viewer is static. Start it with <code>make viewer</code> to paste a PEP, Discourse thread or
+          GitHub issue/PR URL and import it here.
         </p>
       </div>
     );
   return (
     <div className="card importer">
       <div className="imp-head">
-        <strong>Import a GitHub issue or pull request</strong>
+        <strong>Import a discussion</strong>
         <span className="fine">
           model <code>{status.model ?? "not configured"}</code> · GitHub {status.github_auth ? "authenticated" : "anonymous (60 req/h)"}
         </span>
@@ -200,7 +201,7 @@ function ImportPanel({ onImported }: { onImported: () => void }) {
           if (!busy && url.trim()) start(false);
         }}
       >
-        <input placeholder="https://github.com/owner/repo/issues/123" value={url} onChange={(e) => setUrl(e.target.value)} disabled={busy} />
+        <input placeholder="https://peps.python.org/pep-0758/  ·  https://discuss.python.org/t/…  ·  https://github.com/o/r/issues/1" value={url} onChange={(e) => setUrl(e.target.value)} disabled={busy} />
         <button className="primary" disabled={busy || !url.trim()}>
           {busy ? "Importing…" : "Import"}
         </button>
