@@ -53,6 +53,23 @@
   "topic": "quillfmt: which configuration file format should we support?"
  },
  {
+  "alternatives": 6,
+  "case": "discourse-discuss-python-org-66453",
+  "counts": {
+   "accepted": 1,
+   "rejected": 1,
+   "unresolved": 4
+  },
+  "evidence_total": 29,
+  "evidence_verified": 22,
+  "id": "dec-66453-pep-758-allow-except-and-except-expressions-with-import",
+  "question": "Should Python allow unparenthesized except and except* expressions without parentheses?",
+  "source": "https://discuss.python.org/t/pep-758-allow-except-and-except-expressions-without-parentheses/66453",
+  "status": "partially_decided",
+  "summary": "6 alternatives recovered from 52 messages: 1 accepted, 1 rejected, 4 unresolved.",
+  "topic": "PEP 758: Allow `except` and `except*` expressions without parentheses"
+ },
+ {
   "alternatives": 1,
   "case": "gh-pingdotgg-t3code-issue-665",
   "counts": {
